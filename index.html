@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chem 1A Tutor - Master General Chemistry</title>
+    <meta name="description"
+        content="Interactive chemistry learning platform with live attendance sessions and practice questions for general chemistry students.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Landing page specific styles */
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .landing-header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-xl) var(--space-2xl);
+            box-shadow: var(--shadow-md);
+        }
+
+        .landing-header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .landing-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .landing-logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: var(--shadow-glow);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .landing-logo-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .landing-logo h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-200), var(--accent-500));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .landing-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-2xl);
+        }
+
+        .mode-selection {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--space-2xl);
+        }
+
+        .mode-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+        }
+
+        .mode-card:hover {
+            border-color: var(--primary-500);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-lg);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .mode-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: var(--space-md);
+            background: linear-gradient(135deg, var(--text-primary), var(--primary-200));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mode-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--space-lg);
+        }
+
+        .mode-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        .mode-features li {
+            padding: var(--space-sm) 0;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .mode-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .user-profile-mini {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-mini {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-600), var(--primary-600));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="landing-container">
+        <!-- Header -->
+        <header class="landing-header">
+            <div class="landing-header-content">
+                <div class="landing-logo">
+                    <div class="landing-logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Chem 1A Tutor</h1>
+                </div>
+                <div class="header-right">
+                    <!-- User Profile (shown when logged in) -->
+                    <div class="user-profile hidden" id="userProfile">
+                        <span class="user-name" id="userName">User</span>
+                        <div class="avatar" id="userAvatar">U</div>
+                    </div>
+                    <!-- Login Button -->
+                    <button class="btn btn-secondary login-btn" id="loginBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            style="margin-right: 8px;">
+                            <path
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                fill="#4285F4" />
+                            <path
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                fill="#34A853" />
+                            <path
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                fill="#FBBC05" />
+                            <path
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                fill="#EA4335" />
+                        </svg>
+                        Login with Google
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="landing-main">
+            <div class="mode-selection">
+                <!-- Attendance Mode -->
+                <a href="attendance.html" class="mode-card">
+                    <div class="mode-icon">📊</div>
+                    <h2 class="mode-title">Attendance</h2>
+                    <p class="mode-description">
+                        Join live instructor-led sessions and participate in real-time chemistry questions.
+                    </p>
+                    <ul class="mode-features">
+                        <li>Join sessions with code</li>
+                        <li>Answer live questions</li>
+                        <li>Automatic attendance tracking</li>
+                        <li>Instant feedback</li>
+                    </ul>
+                </a>
+
+                <!-- Practice Mode -->
+                <a href="practice.html" class="mode-card">
+                    <div class="mode-icon">📚</div>
+                    <h2 class="mode-title">Practice</h2>
+                    <p class="mode-description">
+                        Self-paced quizzes with randomized questions across all general chemistry topics.
+                    </p>
+                    <ul class="mode-features">
+                        <li>10 random questions per session</li>
+                        <li>Detailed explanations</li>
+                        <li>Track your progress</li>
+                        <li>Review past attempts</li>
+                    </ul>
+                </a>
+
+                <!-- Login/Profile Mode -->
+                <a href="practice.html" class="mode-card" id="profileCard">
+                    <div class="mode-icon">👤</div>
+                    <h2 class="mode-title">Profile</h2>
+                    <p class="mode-description">
+                        Manage your account, view statistics, and track your learning journey.
+                    </p>
+                    <ul class="mode-features">
+                        <li>Google Sign-In</li>
+                        <li>View quiz history</li>
+                        <li>Track accuracy</li>
+                        <li>See best topics</li>
+                    </ul>
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Google OAuth Configuration
+        const GOOGLE_CLIENT_ID = '476164664332-18di861tvctjuv2o4a7fu1db275mbdki.apps.googleusercontent.com';
+        let currentUser = null;
+        let googleInitialized = false;
+
+        // Global callback for when Google library loads
+        window.onGoogleLibraryLoad = function () {
+            console.log('Google library loaded');
+            initializeGoogleAuth();
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for OAuth callback first (since this is the redirect_uri)
+            checkOAuthCallback();
+
+            // Then check for existing user
+            const savedUser = localStorage.getItem('chemTutorUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUI();
+            }
+
+            // Event Listeners
+            document.getElementById('loginBtn').addEventListener('click', handleLoginClick);
+            document.getElementById('userProfile').addEventListener('click', () => {
+                // Optional: Link to profile page or show modal
+                window.location.href = 'practice.html';
+            });
+        });
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('chemTutorUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUI();
+            }
+        }
+
+        function initializeGoogleAuth() {
+            // Pure OAuth2 - no library needed
+            console.log('Using pure OAuth2 flow');
+        }
+
+        function checkOAuthCallback() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('id_token=')) {
+                // We are processing a login callback
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+                const state = params.get('state');
+
+                const savedState = sessionStorage.getItem('oauth_state');
+
+                // Allow state check to be loose if it's missing (dev env)
+                if (savedState && state !== savedState) {
+                    console.error('OAuth state mismatch');
+                    return;
+                }
+
+                if (idToken) {
+                    try {
+                        const payload = parseJwt(idToken);
+
+                        currentUser = {
+                            googleId: payload.sub,
+                            name: payload.name,
+                            email: payload.email,
+                            avatar: payload.picture || payload.name.charAt(0).toUpperCase()
+                        };
+
+                        // Save to LocalStorage for all pages to use
+                        localStorage.setItem('chemTutorUser', JSON.stringify(currentUser));
+                        sessionStorage.setItem('googleUser', JSON.stringify(currentUser));
+
+                        // Handle Redirect Back
+                        const returnPage = sessionStorage.getItem('oauth_return_page');
+
+                        // Clean up
+                        sessionStorage.removeItem('oauth_state');
+                        sessionStorage.removeItem('oauth_return_page');
+                        window.history.replaceState({}, document.title, window.location.pathname);
+
+                        if (returnPage && returnPage !== '/' && returnPage !== window.location.pathname) {
+                            console.log('Redirecting back to:', returnPage);
+                            window.location.href = returnPage;
+                            return; // Stop execution here
+                        }
+
+                        updateUI();
+                        console.log('Google Sign-In successful:', currentUser.name);
+
+                    } catch (error) {
+                        console.error('Error parsing OAuth response:', error);
+                    }
+                }
+            }
+        }
+
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                atob(base64)
+                    .split('')
+                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join('')
+            );
+            return JSON.parse(jsonPayload);
+        }
+
+        function handleLoginClick() {
+            if (currentUser) {
+                // Logout directly
+                localStorage.removeItem('chemTutorUser');
+                location.reload();
+            } else {
+                // Trigger Google Sign-In with redirect
+                const redirectUri = window.location.origin + '/';
+                const scope = 'openid profile email';
+                const state = Math.random().toString(36).substring(7);
+
+                sessionStorage.setItem('oauth_state', state);
+                sessionStorage.setItem('oauth_return_page', window.location.pathname);
+
+                const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+                    `client_id=${GOOGLE_CLIENT_ID}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `response_type=token id_token&` +
+                    `scope=${encodeURIComponent(scope)}&` +
+                    `state=${state}&` +
+                    `nonce=${Math.random().toString(36).substring(7)}&` +
+                    `prompt=select_account`;
+
+                window.location.href = authUrl;
+            }
+        }
+
+        function handleGoogleLogin(response) {
+            try {
+                const payload = parseJwt(response.credential);
+
+                currentUser = {
+                    googleId: payload.sub,
+                    name: payload.name,
+                    email: payload.email,
+                    avatar: payload.picture || payload.name.charAt(0).toUpperCase()
+                };
+
+                localStorage.setItem('chemTutorUser', JSON.stringify(currentUser));
+                updateUI();
+            } catch (error) {
+                console.error('Google Sign-In error:', error);
+                alert('Sign-in failed. Please try again.');
+            }
+        }
+
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                atob(base64)
+                    .split('')
+                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join('')
+            );
+            return JSON.parse(jsonPayload);
+        }
+
+        function updateUI() {
+            const profile = document.getElementById('userProfile');
+            const nameEl = document.getElementById('userName');
+            const avatarEl = document.getElementById('userAvatar');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (currentUser) {
+                console.log('Current User:', currentUser); // Debug
+                nameEl.textContent = currentUser.name;
+
+                if (currentUser.avatar && currentUser.avatar.startsWith('http')) {
+                    // Use img tag for better reliability and error handling
+                    avatarEl.innerHTML = `<img src="${currentUser.avatar}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.onerror=null; this.parentElement.innerHTML='${currentUser.name.charAt(0).toUpperCase()}'; this.parentElement.style.background='';">`;
+                    avatarEl.style.background = 'none';
+                    avatarEl.style.border = '1px solid var(--border-color)';
+                } else {
+                    avatarEl.style.background = '';
+                    avatarEl.innerHTML = currentUser.avatar || currentUser.name.charAt(0).toUpperCase();
+                }
+
+                profile.classList.remove('hidden');
+                // Change button to Sign Out with red color or icon
+                loginBtn.innerHTML = 'Sign Out';
+                loginBtn.style.backgroundColor = '#d93025'; // Red color for logout
+                loginBtn.style.borderColor = '#d93025';
+                loginBtn.style.color = 'white';
+            } else {
+                // Reset to default
+                profile.classList.add('hidden');
+                loginBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Login with Google
+                 `;
+                loginBtn.style.backgroundColor = '';
+                loginBtn.style.borderColor = '';
+                loginBtn.style.color = '';
+            }
+        }
+    </script>
+</body>
+
+</html>

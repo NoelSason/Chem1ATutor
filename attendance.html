@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance - Chem 1A Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <a href="index.html" class="logo" style="text-decoration: none; color: inherit; cursor: pointer;">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Chem 1A Tutor - Attendance</h1>
+                </a>
+                <div class="header-right">
+                    <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Role Selection -->
+            <div id="roleSelection" class="role-selection">
+                <h2 style="text-align: center; margin-bottom: var(--space-2xl); font-size: 2rem;">Select Your Role</h2>
+                <div class="role-cards">
+                    <div class="role-card" onclick="selectRole('instructor')">
+                        <div class="role-icon">👨‍🏫</div>
+                        <h3>Instructor</h3>
+                        <p>Create and manage live attendance sessions</p>
+                    </div>
+                    <div class="role-card" onclick="selectRole('student')">
+                        <div class="role-icon">🎓</div>
+                        <h3>Student</h3>
+                        <p>Join a session and answer questions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructor Panel -->
+            <div id="instructorPanel" class="panel hidden">
+                <!-- Login Screen -->
+                <div id="instructorLogin" class="login-screen">
+                    <div class="login-card">
+                        <h2>Instructor Login</h2>
+                        <p class="text-secondary">Enter admin password to continue</p>
+                        <input type="password" id="adminPassword" class="text-input" placeholder="Admin Password"
+                            onkeypress="if(event.key === 'Enter') instructorLogin()" />
+                        <button class="btn btn-primary" onclick="instructorLogin()">Login</button>
+                        <button class="btn btn-secondary" onclick="backToRoleSelection()">Back</button>
+                    </div>
+                </div>
+
+                <!-- Instructor Dashboard -->
+                <div id="instructorDashboard" class="hidden">
+                    <div class="dashboard-header">
+                        <h2>Instructor Dashboard</h2>
+                        <button class="btn btn-secondary" onclick="instructorLogout()">Logout</button>
+                    </div>
+
+                    <!-- No Active Session -->
+                    <div id="noSession" class="empty-state-card">
+                        <h3>No Active Session</h3>
+                        <p>Create a new session to start taking attendance</p>
+                        <button class="btn btn-primary btn-lg" onclick="createSession()">Create New Session</button>
+                    </div>
+
+                    <!-- Active Session -->
+                    <div id="activeSession" class="hidden">
+                        <div class="session-info-card">
+                            <div class="session-code-display">
+                                <span class="label">Session Code:</span>
+                                <span class="code" id="sessionCode">------</span>
+                            </div>
+                            <div class="session-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Students Joined</span>
+                                    <span class="stat-value" id="studentCount">0</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Questions Asked</span>
+                                    <span class="stat-value" id="questionCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Question Selection -->
+                        <div class="question-selection-card">
+                            <h3>Select Question to Broadcast</h3>
+                            <select id="topicSelect" class="select-input" onchange="loadTopicQuestions()">
+                                <option value="">-- Select Topic --</option>
+                                <option value="atomic-structure">Atomic Structure</option>
+                                <option value="stoichiometry">Stoichiometry</option>
+                                <option value="thermodynamics">Thermodynamics</option>
+                                <option value="equilibrium">Equilibrium</option>
+                                <option value="acids-bases">Acids & Bases</option>
+                                <option value="electrochemistry">Electrochemistry</option>
+                                <option value="orbitals">Orbitals</option>
+                            </select>
+                            <select id="questionSelect" class="select-input" disabled>
+                                <option value="">-- Select Question --</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="broadcastQuestion()" id="broadcastBtn" disabled>
+                                📡 Broadcast Question
+                            </button>
+                        </div>
+
+                        <!-- Current Question Display -->
+                        <div id="currentQuestionDisplay" class="hidden">
+                            <div class="current-question-card">
+                                <h3>Current Question</h3>
+                                <div id="currentQuestionText" class="question-display"></div>
+                                <div class="response-summary">
+                                    <span>Responses: <strong id="responseCount">0</strong></span>
+                                    <button class="btn btn-secondary" onclick="endQuestion()">End Question</button>
+                                </div>
+                            </div>
+
+                            <!-- Live Responses -->
+                            <div class="responses-card">
+                                <h4>Live Responses</h4>
+                                <div id="responsesList"></div>
+                            </div>
+                        </div>
+
+                        <!-- Student List -->
+                        <div class="students-card">
+                            <h3>Joined Students</h3>
+                            <div id="studentsList"></div>
+                        </div>
+
+                        <!-- Session Controls -->
+                        <div class="session-controls">
+                            <button class="btn btn-secondary" onclick="toggleSlideshowMode()">📊 Toggle
+                                Slideshow</button>
+                            <button class="btn btn-secondary" onclick="downloadAttendance()">📥 Download
+                                Attendance</button>
+                            <button class="btn btn-error" onclick="endSession()">End Session</button>
+                        </div>
+                    </div>
+
+                    <!-- Instructor Slideshow View -->
+                    <div id="instructorSlideshow" class="hidden">
+                        <div class="slideshow-header">
+                            <h3>Slideshow Mode</h3>
+                            <div class="slideshow-controls">
+                                <label class="btn btn-secondary file-input-label">
+                                    📂 Upload PDF
+                                    <input type="file" id="fileInput" accept="application/pdf" hidden>
+                                </label>
+                                <button class="btn btn-secondary" onclick="onPrevPage()">Previous</button>
+                                <span class="page-info">Page <span id="pageNum">1</span> of <span
+                                        id="pageCount">--</span></span>
+                                <button class="btn btn-secondary" onclick="onNextPage()">Next</button>
+                                <button class="btn btn-error" onclick="clearAnnotations()">Clear Ink</button>
+                                <button class="btn btn-secondary" onclick="toggleSlideshowMode()">Exit
+                                    Slideshow</button>
+                            </div>
+                        </div>
+                        <div class="slideshow-container" id="slideshowContainer">
+                            <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+                            <canvas id="annotationCanvas" class="annotation-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Panel -->
+            <div id="studentPanel" class="panel hidden">
+                <!-- Join Session -->
+                <div id="studentJoin">
+                    <div class="join-card">
+                        <h2>Join Session</h2>
+                        <p class="text-secondary" style="margin-bottom: var(--space-lg);">Sign in with Google to
+                            continue</p>
+
+                        <!-- User Profile Display (Shown when logged in) -->
+                        <div id="studentProfileDisplay" class="user-profile-card hidden"
+                            style="margin-bottom: var(--space-lg); background: var(--bg-elevated); padding: var(--space-md); border-radius: var(--radius-md); display: flex; align-items: center; gap: var(--space-md); border: 1px solid var(--border-color);">
+                            <div id="joinAvatar" class="avatar" style="width: 50px; height: 50px; font-size: 1.5rem;">U
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">Signed in as</div>
+                                <div id="joinName" style="font-weight: 700; color: var(--text-primary);">Student Name
+                                </div>
+                                <div id="joinEmail" style="font-size: 0.8rem; color: var(--text-tertiary);">
+                                    email@example.com</div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Google Sign-In Button -->
+                        <button class="btn btn-secondary login-btn" id="customGoogleSignInBtn"
+                            onclick="triggerGoogleSignIn()" style="width: 100%; margin-bottom: var(--space-lg);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                                <path
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                    fill="#4285F4" />
+                                <path
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                    fill="#34A853" />
+                                <path
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                    fill="#FBBC05" />
+                                <path
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                    fill="#EA4335" />
+                            </svg>
+                            Login with Google
+                        </button>
+
+                        <!-- Hidden div for Google's actual button (invisible) -->
+                        <div id="googleSignInDiv" style="display: none;"></div>
+
+                        <!-- Session Code Input (shown after Google sign-in) -->
+                        <div id="sessionCodeSection" class="hidden">
+                            <input type="text" id="sessionCodeInput" class="text-input"
+                                placeholder="Session Code (e.g., ABC123)" maxlength="6"
+                                style="text-transform: uppercase; margin-bottom: var(--space-md);" />
+                            <button class="btn btn-primary" onclick="joinSession()" style="width: 100%;">Join
+                                Session</button>
+                        </div>
+
+                        <button class="btn btn-secondary" onclick="backToRoleSelection()"
+                            style="width: 100%; margin-top: var(--space-md);">Back</button>
+                    </div>
+                </div>
+
+                <!-- Student Session View -->
+                <div id="studentSession" class="hidden">
+                    <div class="student-info-card">
+                        <div>
+                            <span class="label">Session:</span>
+                            <span class="code" id="studentSessionCode">------</span>
+                        </div>
+                        <div>
+                            <span class="label">Name:</span>
+                            <span id="studentNameDisplay">Student</span>
+                        </div>
+                    </div>
+
+                    <!-- Waiting for Question -->
+                    <div id="waitingForQuestion" class="waiting-card">
+                        <div class="waiting-animation">⏳</div>
+                        <h3>Waiting for instructor...</h3>
+                        <p class="text-secondary">The instructor will broadcast a question shortly</p>
+                    </div>
+
+                    <!-- Answer Question -->
+                    <div id="answerQuestion" class="hidden">
+                        <div class="question-card">
+                            <div class="question-header">
+                                <span class="question-type" id="studentQuestionType">Question</span>
+                            </div>
+                            <div class="question-content" id="studentQuestionText"></div>
+                            <div class="answer-input-area" id="studentAnswerArea"></div>
+                            <button class="btn btn-primary" id="submitAnswerBtn" onclick="submitAnswer()">Submit
+                                Answer</button>
+                            <div class="feedback-area" id="studentFeedback"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="leaveSession()">Leave Session</button>
+                </div>
+
+                <!-- Student Slideshow View -->
+                <div id="studentSlideshow" class="hidden">
+                    <div class="slideshow-header">
+                        <h3>Presentation</h3>
+                        <div class="slideshow-controls">
+                            <span class="page-info">Live View</span>
+                        </div>
+                    </div>
+                    <!-- Re-using the same canvas IDs might handle events weirdly if both in DOM. 
+                          Ideally we'd have separate IDs for student, but slideshow.js uses specific IDs.
+                          Since only one panel is visible at a time (student OR instructor), reusing IDs is OK 
+                          as long as we move the elements or duplicate structure with IDs.
+                          
+                          Correction: We cannot have duplicate IDs. Let's make slideshow.js flexible or just assume
+                          User is EITHER instructor OR student.
+                          Wait, if I test locally with two tabs, they are separate pages essentially.
+                          So duplicate markup with same IDs is fine because only one 'role' is active per page load.
+                      -->
+                    <div class="slideshow-container">
+                        <!-- We need to dynamically effectively use the same IDs because slideshow.js expects them -->
+                        <!-- Actually, for student view we might want to just clone the container structure 
+                             BUT we need unique IDs if we ever did single-page app style. 
+                             However here, the page is same. 
+                             
+                             Let's actually use a shared container in the DOM that we move? No, that's messy.
+                             Let's just duplicate the markup. Since a user is only ONE role, the other div is hidden and
+                             we only init the slideshow for the active role. 
+                             
+                             Wait! If I put id="pdfCanvas" in two places, `document.getElementById` returns the first one.
+                             I need to fix this.
+                         -->
+                        <div id="studentCanvasContainer" class="student-view">
+                            <canvas id="studentPdfCanvas" class="pdf-canvas"></canvas>
+                            <canvas id="studentAnnotationCanvas" class="annotation-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="questions.js"></script>
+    <script src="slideshow.js"></script>
+    <script src="attendance.js"></script>
+</body>
+
+</html>
