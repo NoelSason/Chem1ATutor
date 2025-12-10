@@ -1,6 +1,17 @@
 // LMS Dashboard JavaScript
 // Teacher interface for viewing session history and analytics
 
+// Helper function to generate invite codes
+function generateInviteCode() {
+    // Generate a random 8-character code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
 let currentView = 'sessions';
 
 // Initialize on page load

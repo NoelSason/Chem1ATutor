@@ -1,6 +1,17 @@
 // Class Detail Page JavaScript
 // Manages individual class details, teachers, and students
 
+// Helper function to generate invite codes
+function generateInviteCode() {
+    // Generate a random 8-character code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
 let currentClassId = null;
 let currentClass = null;
 
@@ -63,12 +74,12 @@ async function loadTeachers(classObj) {
     }
 
     container.innerHTML = classObj.teachers.map(email => `
-        <div class="list-item">
+    < div class="list-item" >
             <div class="list-item-content">
                 <span class="list-item-email">${email}</span>
             </div>
             <button class="btn btn-sm btn-error" onclick="removeTeacherFromClassDetail('${email}')">Remove</button>
-        </div>
+        </div >
     `).join('');
 }
 
