@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Panel - Chem 1A Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <h1>Chem 1A Tutor - Dev Panel</h1>
+                </div>
+                <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dev-panel-container">
+                <div class="dev-panel-header">
+                    <div>
+                        <h2>🔧 Developer Panel</h2>
+                        <p class="text-secondary">Admin-only access for managing user roles and permissions</p>
+                        <div style="margin-top: var(--space-sm);">
+                            <span class="badge badge-primary" id="schoolBadge">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('classes')">📚 Classes</button>
+                    <button class="tab-btn" onclick="switchTab('students')">👥 Students</button>
+                    <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+                </div>
+
+                <!-- Classes Tab -->
+            </div>
+            <div class="info-item">
+                <span class="info-label">Total Teachers:</span>
+                <span class="info-value" id="teacherCount">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Storage Used:</span>
+                <span class="info-value" id="storageInfo">Calculating...</span>
+            </div>
+    </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="dev-section danger-zone">
+        <h3>⚠️ Danger Zone</h3>
+        <p class="text-secondary">Irreversible actions - use with caution</p>
+        <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md);">
+            <button class="btn btn-error" onclick="clearAllTeachers()">Clear All
+                Teachers</button>
+            <button class="btn btn-error" onclick="clearAllData()">Clear All App Data</button>
+        </div>
+    </div>
+    </div>
+    </main>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="roles.js"></script>
+    <script src="dev.js"></script>
+</body>
+
+</html>

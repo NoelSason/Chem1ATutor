@@ -18,86 +18,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Display school info
     updateSchoolInfo();
 
-    loadTeachers();
     loadClasses();
     updateSystemInfo();
 });
 
 // ==========================================
-// TEACHER MANAGEMENT
+// NAVIGATION
 // ==========================================
 
-function loadTeachers() {
-    const teachers = getAllTeachers();
-    const container = document.getElementById('teachersList');
-    const countEl = document.getElementById('teacherCount');
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
 
-    countEl.textContent = teachers.length;
-
-    if (teachers.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No teachers added yet</p></div>';
-        return;
-    }
-
-    container.innerHTML = teachers.map(email => `
-    < div class="list-item" >
-            <div class="list-item-content">
-                <span class="list-item-email">${email}</span>
-                <span class="list-item-role">Teacher</span>
-            </div>
-            <button class="btn btn-sm btn-error" onclick="removeTeacherFromList('${email}')">Remove</button>
-        </div >
-    `).join('');
-}
-
-function addTeacherFromInput() {
-    const input = document.getElementById('teacherEmail');
-    const email = input.value.trim().toLowerCase();
-
-    if (!email) {
-        alert('Please enter an email address');
-        return;
-    }
-
-    if (!email.includes('@')) {
-        alert('Please enter a valid email address');
-        return;
-    }
-
-    if (isAdmin(email)) {
-        alert('Admin already has all permissions');
-        input.value = '';
-        return;
-    }
-
-    if (isTeacher(email)) {
-        alert('This user is already a teacher');
-        input.value = '';
-        return;
-    }
-
-    try {
-        addTeacher(email);
-        input.value = '';
-        loadTeachers();
-        showNotification(`Added ${email} as teacher`, 'success');
-    } catch (error) {
-        alert('Error adding teacher: ' + error.message);
-    }
-}
-
-function removeTeacherFromList(email) {
-    if (!confirm(`Remove ${email} from teachers ? `)) {
-        return;
-    }
-
-    try {
-        removeTeacher(email);
-        loadTeachers();
-        showNotification(`Removed ${email} from teachers`, 'success');
-    } catch (error) {
-        alert('Error removing teacher: ' + error.message);
-    }
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tabName}View`).classList.add('active');
 }
 
 // ==========================================
@@ -258,22 +198,25 @@ function updateSchoolInfo() {
 // CLASS MANAGEMENT
 // ==========================================
 
-function loadClasses() {
+async function loadClasses() {
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
 
     // Get admin's school
     let schoolId = 'uc-berkeley'; // Default
-    const roles = JSON.parse(localStorage.getItem('userRoles') || '{}');
-    const roleData = roles[user.email];
+    const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('schools')
+        .eq('email', user.email)
+        .single();
 
-    if (roleData && typeof roleData === 'object' && roleData.schools && roleData.schools.length > 0) {
+    if (roleData && roleData.schools && roleData.schools.length > 0) {
         schoolId = roleData.schools[0];
     }
 
     console.log('🔍 DEBUG: Loading classes for school:', schoolId);
-    console.log('🔍 DEBUG: User role data:', roleData);
 
-    const classes = Object.values(getClasses(schoolId));
+    const classesObj = await getClassesDB(schoolId);
+    const classes = Object.values(classesObj);
     console.log('🔍 DEBUG: Found classes:', classes);
 
     const container = document.getElementById('classesList');
@@ -297,33 +240,41 @@ function loadClasses() {
     `).join('');
 }
 
-function createClassFromInput() {
+async function createClassFromInput() {
     const code = document.getElementById('classCode').value.trim();
     const fullName = document.getElementById('classFullName').value.trim();
     const description = document.getElementById('classDescription').value.trim();
 
-    if (!code) {
-        alert('Please enter a class code');
-        return;
-    }
-
-    if (!fullName) {
-        alert('Please enter the full class name');
+    if (!code || !fullName) {
+        alert('Please fill in class code and full name');
         return;
     }
 
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
+    const schoolId = 'uc-berkeley'; // TODO: Get from user's school
+
+    const classId = `${schoolId}-${code.toLowerCase().replace(/\s+/g, '-')}`;
+
+    const classData = {
+        id: classId,
+        schoolId: schoolId,
+        code: code,
+        fullName: fullName,
+        description: description,
+        semester: getCurrentSemester(),
+        createdBy: user.email
+    };
 
     try {
-        createClass('uc-berkeley', code, fullName, description, user.email);
+        await createClassDB(classData);
 
-        // Clear inputs
+        // Clear form
         document.getElementById('classCode').value = '';
         document.getElementById('classFullName').value = '';
         document.getElementById('classDescription').value = '';
 
-        loadClasses();
-        showNotification(`Created ${code}`, 'success');
+        await loadClasses();
+        showNotification(`Created class: ${code}`, 'success');
     } catch (error) {
         alert('Error creating class: ' + error.message);
     }

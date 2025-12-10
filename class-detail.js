@@ -5,75 +5,77 @@ let currentClassId = null;
 let currentClass = null;
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    // Get class ID from URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    currentClassId = urlParams.get('id');
+// Class Detail Page JavaScript
 
-    if (!currentClassId) {
-        alert('No class specified');
+// Get class ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const classId = urlParams.get('id');
+
+// Load class details on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!classId) {
+        alert('No class ID provided');
         window.location.href = 'dev.html';
         return;
     }
 
-    loadClassDetails();
+    await loadClassDetail();
 });
 
 // ==========================================
 // CLASS DETAILS
 // ==========================================
 
-function loadClassDetails() {
-    currentClass = getClass(currentClassId);
+async function loadClassDetail() {
+    const classObj = await getClassDB(classId);
 
-    if (!currentClass) {
+    if (!classObj) {
         alert('Class not found');
         window.location.href = 'dev.html';
         return;
     }
 
-    // Update page title and info
-    document.title = `${currentClass.code} - Class Management`;
-    document.getElementById('pageTitle').textContent = `${currentClass.code} Management`;
-    document.getElementById('classCode').textContent = currentClass.code;
-    document.getElementById('classSemester').textContent = currentClass.semester;
-    document.getElementById('classFullName').textContent = currentClass.fullName;
-    document.getElementById('classDescription').textContent = currentClass.description || 'No description';
+    // Update page title and header
+    document.title = `${classObj.code} - Class Detail`;
+    document.getElementById('pageTitle').textContent = `${classObj.code} Management`;
+    document.getElementById('classCode').textContent = classObj.code;
+    document.getElementById('classFullName').textContent = classObj.fullName;
+    document.getElementById('classDescription').textContent = classObj.description || 'No description';
+    document.getElementById('classSemester').textContent = classObj.semester;
+    document.getElementById('teacherCount').textContent = classObj.teachers.length;
+    document.getElementById('studentCount').textContent = classObj.students.length;
 
-    // Update stats
-    document.getElementById('teacherCount').textContent = currentClass.teachers.length;
-    document.getElementById('studentCount').textContent = currentClass.students.length;
-
-    // Load lists
-    loadTeachers();
-    loadStudents();
+    // Load teachers and students
+    await loadTeachers(classObj);
+    await loadStudents(classObj);
 }
 
 // ==========================================
 // TEACHER MANAGEMENT
 // ==========================================
 
-function loadTeachers() {
+async function loadTeachers(classObj) {
     const container = document.getElementById('teachersList');
 
-    if (currentClass.teachers.length === 0) {
+    if (classObj.teachers.length === 0) {
         container.innerHTML = '<div class="empty-state"><p>No teachers assigned yet</p></div>';
         return;
     }
 
-    container.innerHTML = currentClass.teachers.map(email => `
+    container.innerHTML = classObj.teachers.map(email => `
         <div class="list-item">
             <div class="list-item-content">
                 <span class="list-item-email">${email}</span>
             </div>
-            <button class="btn btn-sm btn-error" onclick="removeTeacherFromClassUI('${email}')">Remove</button>
+            <button class="btn btn-sm btn-error" onclick="removeTeacherFromClassDetail('${email}')">Remove</button>
         </div>
     `).join('');
 }
 
-function generateTeacherInviteForClass() {
+async function generateTeacherInviteForClass() {
+    const classObj = await getClassDB(classId);
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
-    const invite = createInvite('teacher', currentClass.schoolId, user.email);
+    const invite = createInvite('teacher', classObj.schoolId, user.email);
 
     // Show invite link
     document.getElementById('teacherInviteLink').value = invite.link;
@@ -95,7 +97,7 @@ function copyTeacherInviteLink() {
     });
 }
 
-function addTeacherToClassManually() {
+async function addTeacherToClassFromInput() {
     const input = document.getElementById('teacherEmail');
     const email = input.value.trim().toLowerCase();
 
@@ -110,24 +112,24 @@ function addTeacherToClassManually() {
     }
 
     try {
-        addTeacherToClass(email, currentClassId);
+        await addTeacherToClassDB(email, classId);
         input.value = '';
-        loadClassDetails();
+        await loadClassDetail();
         showNotification(`Added ${email} as teacher`, 'success');
     } catch (error) {
         alert('Error: ' + error.message);
     }
 }
 
-function removeTeacherFromClassUI(email) {
+async function removeTeacherFromClassDetail(email) {
     if (!confirm(`Remove ${email} from this class?`)) {
         return;
     }
 
     try {
-        removeTeacherFromClass(email, currentClassId);
-        loadClassDetails();
-        showNotification(`Removed ${email} from class`, 'success');
+        await removeTeacherFromClassDB(email, classId);
+        await loadClassDetail();
+        showNotification(`Removed ${email}`, 'success');
     } catch (error) {
         alert('Error: ' + error.message);
     }
@@ -137,15 +139,15 @@ function removeTeacherFromClassUI(email) {
 // STUDENT MANAGEMENT
 // ==========================================
 
-function loadStudents() {
+async function loadStudents(classObj) {
     const container = document.getElementById('studentsList');
 
-    if (currentClass.students.length === 0) {
+    if (classObj.students.length === 0) {
         container.innerHTML = '<div class="empty-state"><p>No students enrolled yet</p></div>';
         return;
     }
 
-    container.innerHTML = currentClass.students.map(email => `
+    container.innerHTML = classObj.students.map(email => `
         <div class="list-item">
             <div class="list-item-content">
                 <span class="list-item-email">${email}</span>
@@ -155,9 +157,10 @@ function loadStudents() {
     `).join('');
 }
 
-function generateStudentInviteForClass() {
+async function generateStudentInviteForClass() {
+    const classObj = await getClassDB(classId);
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
-    const invite = createInvite('student', currentClass.schoolId, user.email, currentClassId);
+    const invite = createInvite('student', classObj.schoolId, user.email, classId);
 
     // Show invite link
     document.getElementById('studentInviteLink').value = invite.link;
@@ -179,14 +182,14 @@ function copyStudentInviteLink() {
     });
 }
 
-function removeStudentFromClassUI(email) {
+async function removeStudentFromClassUI(email) {
     if (!confirm(`Remove ${email} from this class?`)) {
         return;
     }
 
     try {
-        removeStudentFromClass(email, currentClassId);
-        loadClassDetails();
+        await removeStudentFromClassDB(email, classId);
+        await loadClassDetail();
         showNotification(`Removed ${email} from class`, 'success');
     } catch (error) {
         alert('Error: ' + error.message);
@@ -197,17 +200,19 @@ function removeStudentFromClassUI(email) {
 // CLASS DELETION
 // ==========================================
 
-function deleteClassConfirm() {
-    if (!confirm(`⚠️ Are you sure you want to delete ${currentClass.code}? This cannot be undone!`)) {
+async function deleteClassConfirm() {
+    const classObj = await getClassDB(classId);
+
+    if (!confirm(`⚠️ Are you sure you want to delete ${classObj.code}? This cannot be undone!`)) {
         return;
     }
 
-    if (!confirm(`This will remove all ${currentClass.teachers.length} teachers and ${currentClass.students.length} students from this class. Continue?`)) {
+    if (!confirm(`This will remove all ${classObj.teachers.length} teachers and ${classObj.students.length} students from this class. Continue?`)) {
         return;
     }
 
     try {
-        deleteClass(currentClassId);
+        await deleteClassDB(classId);
         alert('Class deleted successfully');
         window.location.href = 'dev.html';
     } catch (error) {

@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class Management - Chem 1A Tutor</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -81,62 +83,67 @@
 
                     <!-- Add Teacher Manually -->
                     <div class="form-group" style="margin-top: var(--space-lg);">
-                        <label for="teacherEmail">Or add teacher by email</label>
-                        <div style="display: flex; gap: var(--space-sm);">
-                            <input type="email" id="teacherEmail" class="form-input" placeholder="teacher@example.com"
-                                onkeypress="if(event.key==='Enter') addTeacherToClassManually()">
-                            <button class="btn btn-primary" onclick="addTeacherToClassManually()">Add Teacher</button>
-                        </div>
-                    </div>
-
-                    <!-- Teachers List -->
-                    <div class="teachers-list" style="margin-top: var(--space-lg);">
-                        <h4>Current Teachers</h4>
-                        <div id="teachersList" class="list-container">
-                            <!-- Teachers will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Student Management Section -->
-                <div class="detail-section">
-                    <h3>👥 Student Management</h3>
-
-                    <!-- Generate Student Invite -->
-                    <div class="invite-section">
-                        <button class="btn btn-primary" onclick="generateStudentInviteForClass()">
-                            🔗 Generate Student Invite Link
-                        </button>
-                        <div id="studentInviteLinkDisplay" class="invite-link-display hidden">
-                            <label>Share this link with students:</label>
-                            <div style="display: flex; gap: var(--space-sm);">
-                                <input type="text" id="studentInviteLink" class="form-input" readonly>
-                                <button class="btn btn-secondary" onclick="copyStudentInviteLink()">Copy</button>
+                        <div class="form-group">
+                            <label>Add Teacher by Email</label>
+                            <div style="display: flex; gap: var(--space-xs);">
+                                <input type="email" id="teacherEmail" class="form-input"
+                                    placeholder="teacher@example.com">
+                                <button class="btn btn-primary" onclick="addTeacherToClassFromInput()">Add</button>
                             </div>
-                            <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--space-xs);">
-                                Link expires in 7 days
-                            </p>
+                        </div>
+
+                        <div class="section-header">
+                            <h3>Current Teachers</h3>
+                            <span id="teacherCount" class="badge">0</span>
+                        </div>
+                        <div class="teachers-list" style="margin-top: var(--space-lg);">
+                            <div id="teachersList" class="list-container">
+                                <!-- Teachers will be loaded here -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Students List -->
-                    <div class="students-list" style="margin-top: var(--space-lg);">
-                        <h4>Enrolled Students</h4>
-                        <div id="studentsList" class="list-container">
-                            <!-- Students will be loaded here -->
+                    <!-- Student Management Section -->
+                    <div class="detail-section">
+                        <h3>👥 Student Management</h3>
+
+                        <!-- Generate Student Invite -->
+                        <div class="invite-section">
+                            <button class="btn btn-primary" onclick="generateStudentInviteForClass()">
+                                🔗 Generate Student Invite Link
+                            </button>
+                            <div id="studentInviteLinkDisplay" class="invite-link-display hidden">
+                                <label>Share this link with students:</label>
+                                <div style="display: flex; gap: var(--space-sm);">
+                                    <input type="text" id="studentInviteLink" class="form-input" readonly>
+                                    <button class="btn btn-secondary" onclick="copyStudentInviteLink()">Copy</button>
+                                </div>
+                                <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--space-xs);">
+                                    Link expires in 7 days
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Students List -->
+                        <div class="students-list" style="margin-top: var(--space-lg);">
+                            <h4>Enrolled Students</h4>
+                            <div id="studentsList" class="list-container">
+                                <!-- Students will be loaded here -->
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Danger Zone -->
-                <div class="detail-section danger-zone">
-                    <h3>⚠️ Danger Zone</h3>
-                    <button class="btn btn-error" onclick="deleteClassConfirm()">Delete Class</button>
+                    <!-- Danger Zone -->
+                    <div class="detail-section danger-zone">
+                        <h3>⚠️ Danger Zone</h3>
+                        <button class="btn btn-error" onclick="deleteClassConfirm()">Delete Class</button>
+                    </div>
                 </div>
-            </div>
         </main>
     </div>
 
+    <script src="supabase-config.js"></script>
+    <script src="supabase-db.js"></script>
     <script src="roles.js"></script>
     <script src="class-detail.js"></script>
 </body>

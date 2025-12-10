@@ -15,12 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // MY CLASSES
 // ==========================================
 
-function loadMyClasses() {
+async function loadMyClasses() {
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
     console.log('🔍 LMS DEBUG: User:', user.email);
 
-    const classes = getTeacherClasses(user.email);
-    console.log('🔍 LMS DEBUG: Teacher classes:', classes);
+    // Use Supabase function
+    const classes = await getTeacherClassesDB(user.email);
+    console.log('🔍 LMS DEBUG: Teacher classes from Supabase:', classes);
 
     // Also check all classes to see if teacher is in any
     const allClasses = JSON.parse(localStorage.getItem('classes') || '{}');
@@ -88,9 +89,9 @@ function loadMyClasses() {
     console.log('✅ Classes rendered successfully');
 }
 
-function generateStudentInvite(classId) {
+async function generateStudentInvite(classId) {
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
-    const classObj = getClass(classId);
+    const classObj = await getClassDB(classId);
 
     if (!classObj) {
         alert('Class not found');
@@ -119,8 +120,8 @@ function copyInviteLink(classId) {
     });
 }
 
-function showClassRoster(classId) {
-    const classObj = getClass(classId);
+async function showClassRoster(classId) {
+    const classObj = await getClassDB(classId);
     if (!classObj) return;
 
     const studentList = classObj.students.length > 0
