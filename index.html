@@ -352,21 +352,19 @@
         </main>
     </div>
 
+    <script src="supabase-config.js"></script>
     <script src="roles.js"></script>
     <script>
-        // Google OAuth Configuration
-        const GOOGLE_CLIENT_ID = '476164664332-18di861tvctjuv2o4a7fu1db275mbdki.apps.googleusercontent.com';
         let currentUser = null;
-        let googleInitialized = false;
+        let supabase = null;
 
-        // Global callback for when Google library loads
-        window.onGoogleLibraryLoad = function () {
-            console.log('Google library loaded');
-            initializeGoogleAuth();
-        };
+        // Initialize Supabase
+        if (typeof window.supabaseClient !== 'undefined') {
+            supabase = window.supabaseClient;
+        }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Check for invite code in URL
             const urlParams = new URLSearchParams(window.location.search);
             const inviteCode = urlParams.get('invite');
@@ -385,12 +383,30 @@
                 }
             }
 
-            // Check for OAuth callback first (since this is the redirect_uri)
-            checkOAuthCallback();
+            // Check for Supabase auth session
+            if (supabase) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    // User is authenticated via Supabase
+                    currentUser = {
+                        googleId: session.user.id,
+                        email: session.user.email,
+                        name: session.user.user_metadata.full_name || session.user.email,
+                        avatar: session.user.user_metadata.avatar_url || session.user.email.charAt(0).toUpperCase()
+                    };
+                    localStorage.setItem('chemTutorUser', JSON.stringify(currentUser));
+                    updateUI();
 
-            // Then check for existing user
+                    // Process pending invite if exists
+                    if (sessionStorage.getItem('pendingInvite')) {
+                        processInvite();
+                    }
+                }
+            }
+
+            // Then check for existing user in localStorage
             const savedUser = localStorage.getItem('chemTutorUser');
-            if (savedUser) {
+            if (savedUser && !currentUser) {
                 currentUser = JSON.parse(savedUser);
                 updateUI();
             }
@@ -398,11 +414,10 @@
             // Event Listeners
             document.getElementById('loginBtn').addEventListener('click', handleLoginClick);
             document.getElementById('userProfile').addEventListener('click', () => {
-                // Optional: Link to profile page or show modal
                 window.location.href = 'practice.html';
             });
 
-            // Update card visibility based on role
+            // Update card visibility based on user role
             updateCardVisibility();
         });
 
@@ -462,68 +477,9 @@
             console.log('Using pure OAuth2 flow');
         }
 
-        function checkOAuthCallback() {
-            const hash = window.location.hash;
-            if (hash && hash.includes('id_token=')) {
-                // We are processing a login callback
-                const params = new URLSearchParams(hash.substring(1));
-                const idToken = params.get('id_token');
-                const state = params.get('state');
+        // Supabase handles OAuth callbacks automatically
+        // No custom callback handler needed
 
-                const savedState = sessionStorage.getItem('oauth_state');
-
-                // Allow state check to be loose if it's missing (dev env)
-                if (savedState && state !== savedState) {
-                    console.error('OAuth state mismatch');
-                    return;
-                }
-
-                if (idToken) {
-                    try {
-                        const payload = parseJwt(idToken);
-
-                        currentUser = {
-                            googleId: payload.sub,
-                            name: payload.name,
-                            email: payload.email,
-                            avatar: payload.picture || payload.name.charAt(0).toUpperCase()
-                        };
-
-                        // Save to LocalStorage for all pages to use
-                        localStorage.setItem('chemTutorUser', JSON.stringify(currentUser));
-                        sessionStorage.setItem('googleUser', JSON.stringify(currentUser));
-
-                        // Handle Redirect Back
-                        const returnPage = sessionStorage.getItem('oauth_return_page');
-
-                        // Clean up
-                        sessionStorage.removeItem('oauth_state');
-                        sessionStorage.removeItem('oauth_return_page');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-
-                        if (returnPage && returnPage !== '/' && returnPage !== window.location.pathname) {
-                            console.log('Redirecting back to:', returnPage);
-                            window.location.href = returnPage;
-                            return; // Stop execution here
-                        }
-
-                        updateUI();
-                        updateCardVisibility();
-
-                        // Process pending invite if exists
-                        const pendingInvite = sessionStorage.getItem('pendingInvite');
-                        if (pendingInvite) {
-                            processInvite();
-                        }
-
-                        console.log('Google Sign-In successful:', currentUser.name);
-
-                    } catch (error) {
-                        console.error('Error parsing OAuth response:', error);
-                    }
-                }
-            }
-        }
 
         function parseJwt(token) {
             const base64Url = token.split('.')[1];
@@ -537,30 +493,32 @@
             return JSON.parse(jsonPayload);
         }
 
-        function handleLoginClick() {
+        async function handleLoginClick() {
             if (currentUser) {
-                // Logout directly
+                // Logout
+                if (supabase) {
+                    await supabase.auth.signOut();
+                }
                 localStorage.removeItem('chemTutorUser');
                 location.reload();
             } else {
-                // Trigger Google Sign-In with redirect
-                const redirectUri = window.location.origin + '/';
-                const scope = 'openid profile email';
-                const state = Math.random().toString(36).substring(7);
+                // Sign in with Supabase Google OAuth
+                if (!supabase) {
+                    alert('Authentication not configured. Please check Supabase setup.');
+                    return;
+                }
 
-                sessionStorage.setItem('oauth_state', state);
-                sessionStorage.setItem('oauth_return_page', window.location.pathname);
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/'
+                    }
+                });
 
-                const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' +
-                    `client_id=${GOOGLE_CLIENT_ID}&` +
-                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-                    `response_type=token id_token&` +
-                    `scope=${encodeURIComponent(scope)}&` +
-                    `state=${state}&` +
-                    `nonce=${Math.random().toString(36).substring(7)}&` +
-                    `prompt=select_account`;
-
-                window.location.href = authUrl;
+                if (error) {
+                    console.error('Sign in error:', error);
+                    alert('Sign in failed: ' + error.message);
+                }
             }
         }
 
