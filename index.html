@@ -285,6 +285,51 @@
                     </ul>
                 </a>
 
+                <!-- LMS Dashboard Mode (Teachers + Admin Only) -->
+                <a href="lms.html" class="mode-card" id="lmsCard" style="display: none;">
+                    <div class="mode-icon">📈</div>
+                    <h2 class="mode-title">LMS Dashboard</h2>
+                    <p class="mode-description">
+                        View session history, student profiles, and analytics for instructors.
+                    </p>
+                    <ul class="mode-features">
+                        <li>Manage sessions</li>
+                        <li>View student progress</li>
+                        <li>Access analytics</li>
+                        <li>Export data</li>
+                    </ul>
+                </a>
+
+                <!-- Dev Panel (Admin Only) -->
+                <a href="dev.html" class="mode-card" id="devCard" style="display: none;">
+                    <div class="mode-icon">🔧</div>
+                    <h2 class="mode-title">Dev Panel</h2>
+                    <p class="mode-description">
+                        Admin panel for managing user roles and permissions.
+                    </p>
+                    <ul class="mode-features">
+                        <li>Manage teachers</li>
+                        <li>Assign roles</li>
+                        <li>System info</li>
+                        <li>Data management</li>
+                    </ul>
+                </a>
+
+                <!-- Owner Panel (Owner Only) -->
+                <a href="owner.html" class="mode-card" id="ownerCard" style="display: none;">
+                    <div class="mode-icon">👑</div>
+                    <h2 class="mode-title">Owner Panel</h2>
+                    <p class="mode-description">
+                        Manage schools and assign admins (deans) to institutions.
+                    </p>
+                    <ul class="mode-features">
+                        <li>Create schools</li>
+                        <li>Assign admins</li>
+                        <li>Manage institutions</li>
+                        <li>Full system control</li>
+                    </ul>
+                </a>
+
                 <!-- Login/Profile Mode -->
                 <a href="practice.html" class="mode-card" id="profileCard">
                     <div class="mode-icon">👤</div>
@@ -303,6 +348,7 @@
         </main>
     </div>
 
+    <script src="roles.js"></script>
     <script>
         // Google OAuth Configuration
         const GOOGLE_CLIENT_ID = '476164664332-18di861tvctjuv2o4a7fu1db275mbdki.apps.googleusercontent.com';
@@ -317,6 +363,24 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Check for invite code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteCode = urlParams.get('invite');
+
+            if (inviteCode) {
+                // Store invite code for after login
+                sessionStorage.setItem('pendingInvite', inviteCode);
+
+                // Check if user is already logged in
+                const savedUser = localStorage.getItem('chemTutorUser');
+                if (savedUser) {
+                    processInvite();
+                } else {
+                    // Show message to login
+                    showInvitePrompt();
+                }
+            }
+
             // Check for OAuth callback first (since this is the redirect_uri)
             checkOAuthCallback();
 
@@ -333,7 +397,53 @@
                 // Optional: Link to profile page or show modal
                 window.location.href = 'practice.html';
             });
+
+            // Update card visibility based on role
+            updateCardVisibility();
         });
+
+        function updateCardVisibility() {
+            const user = JSON.parse(localStorage.getItem('chemTutorUser') || 'null');
+
+            if (!user || !user.email) {
+                // Hide role-restricted cards if not logged in
+                document.getElementById('lmsCard').style.display = 'none';
+                document.getElementById('devCard').style.display = 'none';
+                document.getElementById('ownerCard').style.display = 'none'; // Added for owner card
+                return;
+            }
+
+            const userRole = getUserRole(user.email);
+            console.log('🔍 DEBUG: User email:', user.email);
+            console.log('🔍 DEBUG: User role:', userRole);
+
+            // Show LMS card for teachers, admin, and owner
+            if (userRole === 'teacher' || userRole === 'admin' || userRole === 'owner') {
+                document.getElementById('lmsCard').style.display = 'flex';
+                console.log('✅ LMS card shown');
+            } else {
+                document.getElementById('lmsCard').style.display = 'none';
+                console.log('❌ LMS card hidden');
+            }
+
+            // Show Dev Panel for admin and owner
+            if (userRole === 'admin' || userRole === 'owner') {
+                document.getElementById('devCard').style.display = 'flex';
+                console.log('✅ Dev Panel card shown');
+            } else {
+                document.getElementById('devCard').style.display = 'none';
+                console.log('❌ Dev Panel card hidden');
+            }
+
+            // Show Owner Panel only for owner
+            if (userRole === 'owner') {
+                document.getElementById('ownerCard').style.display = 'flex';
+                console.log('✅ Owner Panel card shown');
+            } else {
+                document.getElementById('ownerCard').style.display = 'none';
+                console.log('❌ Owner Panel card hidden');
+            }
+        }
 
         function checkLoginStatus() {
             const savedUser = localStorage.getItem('chemTutorUser');
@@ -394,6 +504,14 @@
                         }
 
                         updateUI();
+                        updateCardVisibility();
+
+                        // Process pending invite if exists
+                        const pendingInvite = sessionStorage.getItem('pendingInvite');
+                        if (pendingInvite) {
+                            processInvite();
+                        }
+
                         console.log('Google Sign-In successful:', currentUser.name);
 
                     } catch (error) {
@@ -514,6 +632,112 @@
                 loginBtn.style.backgroundColor = '';
                 loginBtn.style.borderColor = '';
                 loginBtn.style.color = '';
+            }
+        }
+
+        // ==========================================
+        // INVITE PROCESSING
+        // ==========================================
+
+        function showInvitePrompt() {
+            const inviteCode = sessionStorage.getItem('pendingInvite');
+            if (!inviteCode) return;
+
+            const validation = validateInvite(inviteCode);
+            if (!validation.valid) {
+                alert(`Invite error: ${validation.reason}`);
+                sessionStorage.removeItem('pendingInvite');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            const invite = validation.invite;
+            const school = getSchool(invite.school);
+            const roleName = invite.role === 'admin' ? 'Admin' : 'Teacher';
+
+            // Add padding to body to prevent overlap
+            document.body.style.paddingTop = '80px';
+
+            // Show invite banner
+            const banner = document.createElement('div');
+            banner.id = 'inviteBanner';
+            banner.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+                color: white;
+                padding: 20px;
+                text-align: center;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                animation: slideDown 0.3s ease-out;
+            `;
+            banner.innerHTML = `
+                <button onclick="dismissInviteBanner()" style="
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(255,255,255,0.2);
+                    border: none;
+                    color: white;
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    font-size: 20px;
+                    line-height: 1;
+                ">×</button>
+                <strong>🎉 You've been invited!</strong><br>
+                <span style="font-size: 0.9rem;">Login with Google to accept your invitation as ${roleName} for ${school ? school.name : 'this school'}</span>
+            `;
+            document.body.prepend(banner);
+        }
+
+        function processInvite() {
+            const inviteCode = sessionStorage.getItem('pendingInvite');
+            if (!inviteCode) return;
+
+            const user = JSON.parse(localStorage.getItem('chemTutorUser'));
+            if (!user || !user.email) return;
+
+            try {
+                const invite = acceptInvite(inviteCode, user.email);
+                sessionStorage.removeItem('pendingInvite');
+
+                // Remove invite from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                // Show success message
+                const school = getSchool(invite.school);
+                const roleName = invite.role === 'admin' ? 'Admin' : 'Teacher';
+                alert(`✅ Success! You've been added as ${roleName} for ${school ? school.name : 'the school'}.`);
+
+                // Update UI
+                updateCardVisibility();
+
+                // Redirect to appropriate panel
+                if (invite.role === 'admin') {
+                    window.location.href = 'dev.html';
+                } else if (invite.role === 'teacher') {
+                    window.location.href = 'lms.html';
+                }
+            } catch (error) {
+                alert(`Error accepting invite: ${error.message}`);
+                sessionStorage.removeItem('pendingInvite');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        function dismissInviteBanner() {
+            const banner = document.getElementById('inviteBanner');
+            if (banner) {
+                banner.style.animation = 'slideUp 0.3s ease-out';
+                setTimeout(() => {
+                    banner.remove();
+                    document.body.style.paddingTop = '0';
+                }, 300);
             }
         }
     </script>

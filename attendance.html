@@ -89,7 +89,25 @@
                         <div class="session-info-card">
                             <div class="session-code-display">
                                 <span class="label">Session Code:</span>
-                                <span class="code" id="sessionCode">------</span>
+                                <!-- Session Controls -->
+                                <div class="card">
+                                    <h3>Session Controls</h3>
+                                    <div class="session-info">
+                                        <div>
+                                            <span class="label">Session Code:</span>
+                                            <span class="code" id="sessionCode">------</span>
+                                        </div>
+                                        <div>
+                                            <span class="label">Students:</span>
+                                            <span id="studentCount">0</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md);">
+                                        <button class="btn btn-primary" onclick="enterSlideshow()">Enter
+                                            Slideshow</button>
+                                        <button class="btn btn-secondary" onclick="endSession()">End Session</button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="session-stats">
                                 <div class="stat">

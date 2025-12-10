@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Panel - Chem 1A Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <h1>Chem 1A Tutor - Owner Panel</h1>
+                </div>
+                <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="owner-panel-container">
+                <div class="owner-panel-header">
+                    <h2>👑 Owner Panel</h2>
+                    <p class="text-secondary">Manage schools and assign admins (deans) to each institution</p>
+                </div>
+
+                <!-- Create School Section -->
+                <div class="owner-section">
+                    <h3>🏫 Create New School</h3>
+                    <div class="owner-form">
+                        <div class="form-group">
+                            <label for="schoolName">School Name</label>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <input type="text" id="schoolName" class="form-input"
+                                    placeholder="e.g., Stanford University"
+                                    onkeypress="if(event.key==='Enter') createSchoolFromInput()">
+                                <button class="btn btn-primary" onclick="createSchoolFromInput()">Create School</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schools List -->
+                <div class="owner-section">
+                    <h3>📚 Schools</h3>
+                    <div id="schoolsList" class="schools-grid">
+                        <!-- Schools will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Detail Modal -->
+            <div id="schoolDetailModal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modalSchoolName">School Details</h2>
+                        <button class="btn-close" onclick="closeSchoolDetail()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="detail-section">
+                            <h3>Admins (Deans)</h3>
+
+                            <!-- Generate Invite Link -->
+                            <div class="invite-section">
+                                <button class="btn btn-primary" onclick="generateAdminInvite()">
+                                    🔗 Generate Admin Invite Link
+                                </button>
+                                <div id="inviteLinkDisplay" class="invite-link-display hidden">
+                                    <label>Share this link:</label>
+                                    <div style="display: flex; gap: var(--space-sm);">
+                                        <input type="text" id="inviteLink" class="form-input" readonly>
+                                        <button class="btn btn-secondary" onclick="copyInviteLink()">Copy</button>
+                                    </div>
+                                    <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--space-xs);">
+                                        Link expires in 7 days
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: var(--space-lg);">
+                                <label for="adminEmail">Or add admin by email</label>
+                                <div style="display: flex; gap: var(--space-sm);">
+                                    <input type="email" id="adminEmail" class="form-input"
+                                        placeholder="dean@university.edu"
+                                        onkeypress="if(event.key==='Enter') addAdminFromModal()">
+                                    <button class="btn btn-primary" onclick="addAdminFromModal()">Add Admin</button>
+                                </div>
+                            </div>
+                            <div id="adminsList" class="list-container">
+                                <!-- Admins will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="detail-section danger-zone">
+                            <h3>⚠️ Danger Zone</h3>
+                            <button class="btn btn-error" onclick="deleteCurrentSchool()">Delete School</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="roles.js"></script>
+    <script src="owner.js"></script>
+</body>
+
+</html>

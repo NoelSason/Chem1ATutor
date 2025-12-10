@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Management - Chem 1A Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <h1 id="pageTitle">Class Management</h1>
+                </div>
+                <a href="dev.html" class="btn btn-secondary">← Back to Dev Panel</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="class-detail-container">
+                <!-- Class Info Section -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h2 id="classCode">Loading...</h2>
+                        <span id="classSemester" class="class-semester"></span>
+                    </div>
+                    <h3 id="classFullName" class="class-subtitle"></h3>
+                    <p id="classDescription" class="text-secondary"></p>
+
+                    <div class="class-stats-row">
+                        <div class="stat-box">
+                            <span class="stat-icon">👨‍🏫</span>
+                            <div>
+                                <div id="teacherCount" class="stat-number">0</div>
+                                <div class="stat-label">Teachers</div>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-icon">👥</span>
+                            <div>
+                                <div id="studentCount" class="stat-number">0</div>
+                                <div class="stat-label">Students</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Management Section -->
+                <div class="detail-section">
+                    <h3>👨‍🏫 Teacher Management</h3>
+
+                    <!-- Generate Teacher Invite -->
+                    <div class="invite-section">
+                        <button class="btn btn-primary" onclick="generateTeacherInviteForClass()">
+                            🔗 Generate Teacher Invite Link
+                        </button>
+                        <div id="teacherInviteLinkDisplay" class="invite-link-display hidden">
+                            <label>Share this link with teachers:</label>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <input type="text" id="teacherInviteLink" class="form-input" readonly>
+                                <button class="btn btn-secondary" onclick="copyTeacherInviteLink()">Copy</button>
+                            </div>
+                            <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--space-xs);">
+                                Link expires in 7 days
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Add Teacher Manually -->
+                    <div class="form-group" style="margin-top: var(--space-lg);">
+                        <label for="teacherEmail">Or add teacher by email</label>
+                        <div style="display: flex; gap: var(--space-sm);">
+                            <input type="email" id="teacherEmail" class="form-input" placeholder="teacher@example.com"
+                                onkeypress="if(event.key==='Enter') addTeacherToClassManually()">
+                            <button class="btn btn-primary" onclick="addTeacherToClassManually()">Add Teacher</button>
+                        </div>
+                    </div>
+
+                    <!-- Teachers List -->
+                    <div class="teachers-list" style="margin-top: var(--space-lg);">
+                        <h4>Current Teachers</h4>
+                        <div id="teachersList" class="list-container">
+                            <!-- Teachers will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Management Section -->
+                <div class="detail-section">
+                    <h3>👥 Student Management</h3>
+
+                    <!-- Generate Student Invite -->
+                    <div class="invite-section">
+                        <button class="btn btn-primary" onclick="generateStudentInviteForClass()">
+                            🔗 Generate Student Invite Link
+                        </button>
+                        <div id="studentInviteLinkDisplay" class="invite-link-display hidden">
+                            <label>Share this link with students:</label>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <input type="text" id="studentInviteLink" class="form-input" readonly>
+                                <button class="btn btn-secondary" onclick="copyStudentInviteLink()">Copy</button>
+                            </div>
+                            <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--space-xs);">
+                                Link expires in 7 days
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Students List -->
+                    <div class="students-list" style="margin-top: var(--space-lg);">
+                        <h4>Enrolled Students</h4>
+                        <div id="studentsList" class="list-container">
+                            <!-- Students will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="detail-section danger-zone">
+                    <h3>⚠️ Danger Zone</h3>
+                    <button class="btn btn-error" onclick="deleteClassConfirm()">Delete Class</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="roles.js"></script>
+    <script src="class-detail.js"></script>
+</body>
+
+</html>

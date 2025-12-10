@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Panel - Chem 1A Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <h1>Chem 1A Tutor - Dev Panel</h1>
+                </div>
+                <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dev-panel-container">
+                <div class="dev-panel-header">
+                    <div>
+                        <h2>🔧 Developer Panel</h2>
+                        <p class="text-secondary">Admin-only access for managing user roles and permissions</p>
+                        <div style="margin-top: var(--space-sm);">
+                            <span class="badge badge-primary" id="schoolBadge">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Management Section -->
+                <div class="dev-section">
+                    <h3>👨‍🏫 Teacher Management</h3>
+                    <p class="text-secondary">Add or remove teachers who can access the LMS Dashboard and create
+                        sessions</p>
+
+                    <!-- Generate Teacher Invite Link -->
+                    <div class="invite-section">
+                        <button class="btn btn-primary" onclick="generateTeacherInvite()">
+                            🔗 Generate Teacher Invite Link
+                        </button>
+                        <div id="teacherInviteLinkDisplay" class="invite-link-display hidden">
+                            <label>Share this link:</label>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <input type="text" id="teacherInviteLink" class="form-input" readonly>
+                                <button class="btn btn-secondary" onclick="copyTeacherInviteLink()">Copy</button>
+                            </div>
+                            <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--space-xs);">
+                                Link expires in 7 days
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Add Teacher Form -->
+                    <div class="dev-form">
+                        <div class="form-group" style="margin-top: var(--space-lg);">
+                            <label for="teacherEmail">Or add teacher by email</label>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <input type="email" id="teacherEmail" class="form-input"
+                                    placeholder="teacher@example.com"
+                                    onkeypress="if(event.key==='Enter') addTeacherFromInput()">
+                                <button class="btn btn-primary" onclick="addTeacherFromInput()">Add Teacher</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teachers List -->
+                    <div class="teachers-list">
+                        <h4>Current Teachers</h4>
+                        <div id="teachersList" class="list-container">
+                            <!-- Teachers will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Management Section -->
+                <div class="dev-section">
+                    <h3>📚 Class Management</h3>
+                    <p class="text-secondary">Create and manage classes, assign teachers to each class</p>
+
+                    <!-- Create Class Form -->
+                    <div class="dev-form">
+                        <div class="form-group">
+                            <label for="classCode">Class Code</label>
+                            <input type="text" id="classCode" class="form-input" placeholder="e.g., CHEM 1A">
+                        </div>
+                        <div class="form-group">
+                            <label for="classFullName">Full Name</label>
+                            <input type="text" id="classFullName" class="form-input"
+                                placeholder="e.g., General Chemistry 1A">
+                        </div>
+                        <div class="form-group">
+                            <label for="classDescription">Description</label>
+                            <textarea id="classDescription" class="form-input" rows="3"
+                                placeholder="Brief description of the class"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="createClassFromInput()">Create Class</button>
+                    </div>
+
+                    <!-- Classes List -->
+                    <div class="classes-list" style="margin-top: var(--space-lg);">
+                        <h4>Current Classes</h4>
+                        <div id="classesList" class="list-container">
+                            <!-- Classes will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Info Section -->
+                <div class="dev-section">
+                    <h3>ℹ️ System Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Admin Email:</span>
+                            <span class="info-value">cubemasternoel@gmail.com</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Teachers:</span>
+                            <span class="info-value" id="teacherCount">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Storage Used:</span>
+                            <span class="info-value" id="storageInfo">Calculating...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="dev-section danger-zone">
+                    <h3>⚠️ Danger Zone</h3>
+                    <p class="text-secondary">Irreversible actions - use with caution</p>
+                    <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md);">
+                        <button class="btn btn-error" onclick="clearAllTeachers()">Clear All Teachers</button>
+                        <button class="btn btn-error" onclick="clearAllData()">Clear All App Data</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="roles.js"></script>
+    <script src="dev.js"></script>
+</body>
+
+</html>

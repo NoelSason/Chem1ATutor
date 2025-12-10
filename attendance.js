@@ -814,3 +814,88 @@ loadStudentSession = function (studentData) {
         }
     }, 2000);
 };
+
+// ==========================================
+// SESSION HISTORY & LMS FUNCTIONS
+// ==========================================
+
+function calculateSessionAnalytics(session) {
+    const totalStudents = session.students.length;
+    const questionsAsked = session.questionHistory ? session.questionHistory.length : 0;
+
+    let totalResponses = 0;
+    let correctResponses = 0;
+
+    if (session.questionHistory) {
+        session.questionHistory.forEach(q => {
+            if (q.responses) {
+                totalResponses += q.responses.length;
+                q.responses.forEach(r => {
+                    if (r.isCorrect) correctResponses++;
+                });
+            }
+        });
+    }
+
+    return {
+        totalStudents,
+        questionsAsked,
+        totalResponses,
+        correctResponses,
+        averageAccuracy: totalResponses > 0 ? (correctResponses / totalResponses * 100).toFixed(1) : 0
+    };
+}
+
+function endSession() {
+    const session = getActiveSession();
+    if (!session) {
+        alert('No active session to end');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to end this session? This will save it to history.')) {
+        return;
+    }
+
+    // Add end time
+    session.endTime = new Date().toISOString();
+
+    // Calculate analytics
+    session.analytics = calculateSessionAnalytics(session);
+
+    // Save to history
+    const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+    history.push(session);
+    localStorage.setItem('sessionHistory', JSON.stringify(history));
+
+    // Clear active session
+    localStorage.removeItem('activeSession');
+    sessionStorage.removeItem('studentData');
+
+    // Stop polling
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+
+    alert(`Session ${session.code} has been ended and saved to history.`);
+
+    // Redirect to home or LMS
+    window.location.href = 'index.html';
+}
+
+function getSessionHistory() {
+    return JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+}
+
+function getSessionById(sessionId) {
+    const history = getSessionHistory();
+    return history.find(s => s.code === sessionId);
+}
+
+function clearSessionHistory() {
+    if (confirm('Are you sure you want to clear all session history? This cannot be undone.')) {
+        localStorage.removeItem('sessionHistory');
+        alert('Session history cleared');
+    }
+}
