@@ -6,8 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Panel - Chem 1A Tutor</title>
     <link rel="stylesheet" href="styles.css">
+
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase (works on both localhost and Vercel)
+        const SUPABASE_URL = 'https://yreeccqkuhijinfrlxzl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyZWVjY3FrdWhpamluZnJseHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODg5ODcsImV4cCI6MjA4MDg2NDk4N30.EmmhQhihfq2Yl661kkklzNNuTBOYc0X1WJAkaZ3RHFE';
+
+        let supabase = null;
+
+        // Create Supabase client
+        if (typeof window.supabase !== 'undefined') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase initialized');
+        } else {
+            console.error('❌ Supabase library not loaded');
+        }
+    </script>
+    <script src="supabase-db.js"></script>
+
+    <!-- Application Scripts -->
+    <script src="roles.js"></script>
+    <script src="owner.js" defer></script>
 </head>
 
 <body>
@@ -100,7 +121,17 @@
                                     <button class="btn btn-primary" onclick="addAdminFromModal()">Add Admin</button>
                                 </div>
                             </div>
-                            <div id="adminsList" class="list-container">
+
+                            <!-- Accepted Invites List -->
+                            <div id="acceptedInvitesSection" class="accepted-invites-section"
+                                style="margin-top: var(--space-lg);">
+                                <h4>Recently Accepted Invites</h4>
+                                <div id="acceptedInvitesList" class="list-container">
+                                    <!-- Accepted invites will be loaded here -->
+                                </div>
+                            </div>
+
+                            <div id="adminsList" class="list-container" style="margin-top: var(--space-lg);">
                                 <!-- Admins will be loaded here -->
                             </div>
                         </div>
@@ -115,10 +146,7 @@
         </main>
     </div>
 
-    <script src="supabase-config.js"></script>
-    <script src="supabase-db.js"></script>
-    <script src="roles.js"></script>
-    <script src="owner.js"></script>
+
 </body>
 
 </html>

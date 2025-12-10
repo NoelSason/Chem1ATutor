@@ -141,7 +141,21 @@
         </main>
     </div>
 
-    <script src="supabase-config.js"></script>
+    <script>
+        // Initialize Supabase (works on both localhost and Vercel)
+        const SUPABASE_URL = 'https://yreeccqkuhijinfrlxzl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyZWVjY3FrdWhpamluZnJseHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODg5ODcsImV4cCI6MjA4MDg2NDk4N30.EmmhQhihfq2Yl661kkklzNNuTBOYc0X1WJAkaZ3RHFE';
+
+        let supabase = null;
+
+        // Create Supabase client
+        if (typeof window.supabase !== 'undefined') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase initialized');
+        } else {
+            console.error('❌ Supabase library not loaded');
+        }
+    </script>
     <script src="supabase-db.js"></script>
     <script src="roles.js"></script>
     <script src="lms.js"></script>
