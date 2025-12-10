@@ -98,10 +98,26 @@ async function generateStudentInvite(classId) {
         return;
     }
 
-    const invite = createInvite('student', classObj.schoolId, user.email, classId);
+    // Generate invite code
+    const code = generateInviteCode();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create invite in database
+    await createInviteDB({
+        code: code,
+        role: 'student',
+        school: classObj.schoolId,
+        classId: classId,
+        createdBy: user.email,
+        expiresAt: expiresAt.toISOString()
+    });
+
+    // Generate invite link
+    const inviteLink = `${window.location.origin}/?invite=${code}`;
 
     // Show invite link
-    document.getElementById(`inviteLink-${classId}`).value = invite.link;
+    document.getElementById(`inviteLink-${classId}`).value = inviteLink;
     document.getElementById(`invite-${classId}`).classList.remove('hidden');
 
     showNotification('Student invite link generated!', 'success');

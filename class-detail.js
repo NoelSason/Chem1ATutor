@@ -75,10 +75,27 @@ async function loadTeachers(classObj) {
 async function generateTeacherInviteForClass() {
     const classObj = await getClassDB(classId);
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
-    const invite = createInvite('teacher', classObj.schoolId, user.email);
+
+    // Generate invite code
+    const code = generateInviteCode();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create invite in database
+    await createInviteDB({
+        code: code,
+        role: 'teacher',
+        school: classObj.schoolId,
+        classId: classId,
+        createdBy: user.email,
+        expiresAt: expiresAt.toISOString()
+    });
+
+    // Generate invite link
+    const inviteLink = `${window.location.origin}/?invite=${code}`;
 
     // Show invite link
-    document.getElementById('teacherInviteLink').value = invite.link;
+    document.getElementById('teacherInviteLink').value = inviteLink;
     document.getElementById('teacherInviteLinkDisplay').classList.remove('hidden');
 
     showNotification('Teacher invite link generated!', 'success');
@@ -160,10 +177,27 @@ async function loadStudents(classObj) {
 async function generateStudentInviteForClass() {
     const classObj = await getClassDB(classId);
     const user = JSON.parse(localStorage.getItem('chemTutorUser'));
-    const invite = createInvite('student', classObj.schoolId, user.email, classId);
+
+    // Generate invite code
+    const code = generateInviteCode();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create invite in database
+    await createInviteDB({
+        code: code,
+        role: 'student',
+        school: classObj.schoolId,
+        classId: classId,
+        createdBy: user.email,
+        expiresAt: expiresAt.toISOString()
+    });
+
+    // Generate invite link
+    const inviteLink = `${window.location.origin}/?invite=${code}`;
 
     // Show invite link
-    document.getElementById('studentInviteLink').value = invite.link;
+    document.getElementById('studentInviteLink').value = inviteLink;
     document.getElementById('studentInviteLinkDisplay').classList.remove('hidden');
 
     showNotification('Student invite link generated!', 'success');

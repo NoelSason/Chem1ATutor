@@ -514,10 +514,14 @@
                     return;
                 }
 
+                // Determine the correct redirect URL based on environment
+                const redirectUrl = window.location.origin + window.location.pathname;
+                console.log('🔐 OAuth redirect URL:', redirectUrl);
+
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/'
+                        redirectTo: redirectUrl
                     }
                 });
 
@@ -607,11 +611,11 @@
         // INVITE PROCESSING
         // ==========================================
 
-        function showInvitePrompt() {
+        async function showInvitePrompt() {
             const inviteCode = sessionStorage.getItem('pendingInvite');
             if (!inviteCode) return;
 
-            const validation = validateInvite(inviteCode);
+            const validation = await validateInviteDB(inviteCode);
             if (!validation.valid) {
                 alert(`Invite error: ${validation.reason}`);
                 sessionStorage.removeItem('pendingInvite');
@@ -620,8 +624,8 @@
             }
 
             const invite = validation.invite;
-            const school = getSchool(invite.school);
-            const roleName = invite.role === 'admin' ? 'Admin' : 'Teacher';
+            const school = await getSchoolDB(invite.school);
+            const roleName = invite.role === 'admin' ? 'Admin' : (invite.role === 'teacher' ? 'Teacher' : 'Student');
 
             // Add padding to body to prevent overlap
             document.body.style.paddingTop = '80px';
@@ -663,7 +667,7 @@
             document.body.prepend(banner);
         }
 
-        function processInvite() {
+        async function processInvite() {
             const inviteCode = sessionStorage.getItem('pendingInvite');
             if (!inviteCode) return;
 
@@ -671,15 +675,15 @@
             if (!user || !user.email) return;
 
             try {
-                const invite = acceptInvite(inviteCode, user.email);
+                const invite = await acceptInviteDB(inviteCode, user.email);
                 sessionStorage.removeItem('pendingInvite');
 
                 // Remove invite from URL
                 window.history.replaceState({}, document.title, window.location.pathname);
 
                 // Show success message
-                const school = getSchool(invite.school);
-                const roleName = invite.role === 'admin' ? 'Admin' : 'Teacher';
+                const school = await getSchoolDB(invite.school);
+                const roleName = invite.role === 'admin' ? 'Admin' : (invite.role === 'teacher' ? 'Teacher' : 'Student');
                 alert(`✅ Success! You've been added as ${roleName} for ${school ? school.name : 'the school'}.`);
 
                 // Update UI
@@ -690,6 +694,8 @@
                     window.location.href = 'dev.html';
                 } else if (invite.role === 'teacher') {
                     window.location.href = 'lms.html';
+                } else if (invite.role === 'student') {
+                    window.location.href = 'practice.html';
                 }
             } catch (error) {
                 alert(`Error accepting invite: ${error.message}`);
