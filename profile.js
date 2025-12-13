@@ -402,32 +402,52 @@ async function callGeminiForChat(prompt) {
     }
 
     if (!apiKey) {
+        console.error('❌ No API key found');
         throw new Error('Gemini API key not configured. Please contact the administrator.');
     }
 
-    const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+    console.log('🔑 API key found:', apiKey.substring(0, 10) + '...');
 
-    const response = await fetch(`${API_URL}?key = ${apiKey} `, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1000,
-                topP: 0.8,
-                topK: 10
+    const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+    const fullUrl = `${API_URL}?key=${apiKey}`;
+
+    console.log('📡 Making request to:', API_URL);
+
+    try {
+        const response = await fetch(fullUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000,
+                    topP: 0.8,
+                    topK: 10
+                }
+            })
+        });
+
+        console.log('📥 Response status:', response.status);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('❌ API Error:', errorData);
+
+            if (response.status === 403) {
+                throw new Error('API key is invalid or restricted. Please check your Google AI Studio settings and ensure the API key has no domain restrictions.');
             }
-        })
-    });
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || 'Failed to get AI response');
+            throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Got response from AI');
+        return data.candidates[0].content.parts[0].text;
+    } catch (error) {
+        console.error('💥 Error calling Gemini API:', error);
+        throw error;
     }
-
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
 }
 
 function addChatMessage(role, message) {
