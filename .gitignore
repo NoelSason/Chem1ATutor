@@ -3,6 +3,5 @@ node_modules/
 node_modules/
 .DS_Store
 supabase-config.js
-gemini-config.js
 
 .gemini/
