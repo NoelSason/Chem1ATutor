@@ -433,13 +433,13 @@ async function callGeminiForChat(prompt) {
 function addChatMessage(role, message) {
     const messagesContainer = document.getElementById('chatMessages');
     const messageEl = document.createElement('div');
-    messageEl.className = `chat - message ${role} -message`;
+    messageEl.className = `chat-message ${role}-message`;
 
     messageEl.innerHTML = `
-        < div class="message-avatar" > ${role === 'ai' ? '🤖' : '👤'}</div >
-            <div class="message-content">
-                <p>${message}</p>
-            </div>
+        <div class="message-avatar">${role === 'ai' ? '🤖' : '👤'}</div>
+        <div class="message-content">
+            <p>${message}</p>
+        </div>
     `;
 
     messagesContainer.appendChild(messageEl);
@@ -454,12 +454,12 @@ function addTypingIndicator() {
     typingEl.className = 'chat-message ai-message typing-indicator';
 
     typingEl.innerHTML = `
-        < div class="message-avatar" >🤖</div >
-            <div class="message-content">
-                <div class="typing-dots">
-                    <span></span><span></span><span></span>
-                </div>
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
             </div>
+        </div>
     `;
 
     messagesContainer.appendChild(typingEl);
