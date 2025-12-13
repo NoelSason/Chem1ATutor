@@ -3,6 +3,30 @@
  * Provides personalized explanations for incorrect answers
  */
 
+/**
+ * Get Gemini API key from environment or config
+ */
+function getGeminiApiKey() {
+    // Try environment variable first (for production)
+    if (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) {
+        return process.env.GEMINI_API_KEY;
+    }
+
+    // Try Vercel public env var (prefixed with NEXT_PUBLIC_)
+    if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+        return process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    }
+
+    // Fallback to config file (for local development)
+    if (typeof GEMINI_CONFIG !== 'undefined' && GEMINI_CONFIG && GEMINI_CONFIG.apiKey) {
+        return GEMINI_CONFIG.apiKey;
+    }
+
+    throw new Error('Gemini API key not found. Please set NEXT_PUBLIC_GEMINI_API_KEY in Vercel or configure gemini-config.js locally.');
+}
+
+const API_KEY = getGeminiApiKey();
+
 // Cache for AI responses to avoid redundant API calls
 const aiCache = new Map();
 

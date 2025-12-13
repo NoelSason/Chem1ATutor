@@ -389,14 +389,25 @@ function buildChatPrompt(userMessage) {
 }
 
 async function callGeminiForChat(prompt) {
-    // Check if GEMINI_CONFIG is available
-    if (typeof GEMINI_CONFIG === 'undefined' || !GEMINI_CONFIG || !GEMINI_CONFIG.apiKey) {
-        throw new Error('Gemini API key not configured. Please check gemini-config.js');
+    // Get API key from various sources
+    let apiKey = null;
+
+    // Try GEMINI_CONFIG first (local development)
+    if (typeof GEMINI_CONFIG !== 'undefined' && GEMINI_CONFIG && GEMINI_CONFIG.apiKey) {
+        apiKey = GEMINI_CONFIG.apiKey;
+    }
+    // Try window.GEMINI_API_KEY (set by Vercel)
+    else if (typeof window !== 'undefined' && window.GEMINI_API_KEY) {
+        apiKey = window.GEMINI_API_KEY;
+    }
+
+    if (!apiKey) {
+        throw new Error('Gemini API key not configured. Please contact the administrator.');
     }
 
     const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
-    const response = await fetch(`${API_URL}?key=${GEMINI_CONFIG.apiKey}`, {
+    const response = await fetch(`${API_URL}?key = ${apiKey} `, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -422,13 +433,13 @@ async function callGeminiForChat(prompt) {
 function addChatMessage(role, message) {
     const messagesContainer = document.getElementById('chatMessages');
     const messageEl = document.createElement('div');
-    messageEl.className = `chat-message ${role}-message`;
+    messageEl.className = `chat - message ${role} -message`;
 
     messageEl.innerHTML = `
-        <div class="message-avatar">${role === 'ai' ? '🤖' : '👤'}</div>
-        <div class="message-content">
-            <p>${message}</p>
-        </div>
+        < div class="message-avatar" > ${role === 'ai' ? '🤖' : '👤'}</div >
+            <div class="message-content">
+                <p>${message}</p>
+            </div>
     `;
 
     messagesContainer.appendChild(messageEl);
@@ -443,12 +454,12 @@ function addTypingIndicator() {
     typingEl.className = 'chat-message ai-message typing-indicator';
 
     typingEl.innerHTML = `
-        <div class="message-avatar">🤖</div>
-        <div class="message-content">
-            <div class="typing-dots">
-                <span></span><span></span><span></span>
+        < div class="message-avatar" >🤖</div >
+            <div class="message-content">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
             </div>
-        </div>
     `;
 
     messagesContainer.appendChild(typingEl);

@@ -1,0 +1,9 @@
+<!-- 
+  This script injects the Gemini API key from Vercel environment variables
+  into the browser's window object so client-side code can access it.
+-->
+<script>
+    // Inject Gemini API key from Vercel environment variable
+    // This will be replaced at build time by Vercel
+    window.GEMINI_API_KEY = '${process.env.GEMINI_API_KEY}';
+</script>
