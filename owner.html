@@ -47,7 +47,10 @@
                     </svg>
                     <h1>Chem 1A Tutor - Owner Panel</h1>
                 </div>
-                <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+                <div style="display: flex; gap: 12px;">
+                    <a href="debug-console.html" class="btn btn-primary">🔧 Debug Console</a>
+                    <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+                </div>
             </div>
         </header>
 
@@ -63,7 +66,10 @@
                 <div class="owner-section" id="tabManagementSection" style="display: none;">
                     <h3>🎛️ Tab Management (Super Admin Only)</h3>
                     <p class="text-secondary" style="margin-bottom: var(--space-lg);">
-                        Control which tabs are visible on the home page for all users
+                        Control which navigation cards are visible on the home page for all users.
+                        <strong>Note:</strong> As super admin, you will always see all tabs regardless of these
+                        settings.
+                        Other users will only see enabled tabs.
                     </p>
                     <div class="tab-toggles-grid">
                         <div class="tab-toggle-item">

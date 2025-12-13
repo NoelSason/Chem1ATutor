@@ -101,6 +101,18 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+/* App Header - used in owner, dev, lms, and class-detail pages */
+.app-header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--space-lg) var(--space-xl);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-md);
+}
+
 .header-content {
     max-width: 1400px;
     margin: 0 auto;
@@ -112,7 +124,9 @@ body {
 .header-right {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-xl);
+    flex: 1;
 }
 
 .logo {
@@ -214,6 +228,7 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     text-align: right;
+    white-space: nowrap;
 }
 
 .avatar {
@@ -230,6 +245,13 @@ body {
     border: 2px solid var(--bg-tertiary);
     box-shadow: 0 0 0 2px var(--primary-500);
     transition: transform var(--transition-base);
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .user-profile:hover .avatar {
@@ -3082,4 +3104,36 @@ body {
 .empty-state p {
     margin-bottom: var(--space-lg);
     font-size: 1.1rem;
+}
+
+/* ===== Navigation Links ===== */
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    margin-right: 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.nav-link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.nav-link.active {
+    background: var(--primary-500);
+    color: white;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.nav-link svg {
+    margin-right: 8px;
 }
