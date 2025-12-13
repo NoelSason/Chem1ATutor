@@ -34,10 +34,11 @@
                     <h1>Chem 1A Tutor</h1>
                 </a>
                 <div class="header-right">
-                    <div class="user-profile hidden" id="userProfile">
+                    <a href="profile.html" class="user-profile hidden" id="userProfile"
+                        style="text-decoration: none; color: inherit;">
                         <span class="user-name" id="userName">User</span>
                         <div class="avatar" id="userAvatar">U</div>
-                    </div>
+                    </a>
                     <button class="btn btn-secondary login-btn" id="loginBtn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
                             style="margin-right: 8px;">
@@ -317,6 +318,9 @@
     </div>
 
     <script src="questions.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="gemini-config.js"></script>
+    <script src="ai-helper.js"></script>
     <script src="practice.js"></script>
 </body>
 

@@ -368,6 +368,7 @@ function saveQuizAttempt() {
     // Calculate score and collect question details
     let score = 0;
     const questionDetails = [];
+    const userAnswers = [];
 
     currentSessionQuestions.forEach((question, index) => {
         const state = questionState[index];
@@ -387,17 +388,21 @@ function saveQuizAttempt() {
         // Determine user answer display
         let userAnswer;
         if (question.type === 'multiple-choice' && state.selected !== undefined && state.selected >= 0) {
-            userAnswer = question.options[state.selected];
+            userAnswer = state.selected; // Store the index for multiple choice
         } else {
-            userAnswer = state.userAnswer || 'Not answered';
+            userAnswer = state.userAnswer || '';
         }
 
         questionDetails.push({
             question: question.question,
-            userAnswer: userAnswer,
-            correctAnswer: correctAnswer,
-            isCorrect: isCorrect
+            type: question.type,
+            options: question.options || null,
+            correct: question.correct !== undefined ? question.correct : null,
+            answer: question.answer || null,
+            explanation: question.explanation || null
         });
+
+        userAnswers.push(userAnswer);
     });
 
     const attempt = {
@@ -405,11 +410,28 @@ function saveQuizAttempt() {
         date: new Date().toISOString(),
         score: score,
         total: 10,
-        questions: questionDetails
+        questions: questionDetails,
+        answers: userAnswers
     };
 
     quizHistory.push(attempt);
     saveUserData();
+
+    // Also save to Supabase if user is logged in
+    if (currentUser && currentUser.email && typeof saveQuizAttemptDB === 'function') {
+        saveQuizAttemptDB({
+            userEmail: currentUser.email,
+            topic: topicNames[currentTopic],
+            score: score,
+            total: 10,
+            date: attempt.date,
+            questions: questionDetails,
+            answers: userAnswers
+        }).catch(err => {
+            console.error('Failed to save quiz to database:', err);
+            // Continue anyway - localStorage backup exists
+        });
+    }
 }
 
 /* =========================================
@@ -546,7 +568,10 @@ function loadQuestion() {
 
     // Clear/Restore Feedback
     if (feedbackEl) {
-        feedbackEl.className = 'feedback-area'; // reset classes
+        // Preserve suffix class when resetting
+        const existingClasses = feedbackEl.className.split(' ');
+        const suffixClass = existingClasses.find(cls => cls.startsWith('feedback-area-'));
+        feedbackEl.className = suffixClass ? `feedback-area ${suffixClass}` : 'feedback-area';
         feedbackEl.innerHTML = '';
         if (state.answered) {
             const feedbackType = state.correct ? 'correct' : 'incorrect';
@@ -673,7 +698,16 @@ function checkAnswer() {
     // Feedback
     const fType = isCorrect ? 'correct' : 'incorrect';
     const fTitle = isCorrect ? '✓ Correct!' : '✗ Incorrect';
-    const html = `<div class="feedback-title">${fTitle}</div><div class="feedback-text">${question.explanation}</div>`;
+    let html = `<div class="feedback-title">${fTitle}</div><div class="feedback-text">${question.explanation}</div>`;
+
+    // Add AI Help button for incorrect answers
+    if (!isCorrect) {
+        html += `<button class="btn btn-ai" id="aiHelpBtn" onclick="requestAIHelp()">
+            <span class="ai-icon">🤖</span> Get AI Help
+        </button>
+        <div class="ai-response-area" id="aiResponseArea"></div>`;
+    }
+
     showFeedback(feedbackEl, html, fType);
 }
 
@@ -736,7 +770,16 @@ function nextQuestion() {
 function showFeedback(el, html, type) {
     if (!el) return;
     el.innerHTML = html;
-    el.className = `feedback-area show ${type}`;
+
+    // Preserve any existing suffix class (e.g., feedback-area-stoich)
+    const existingClasses = el.className.split(' ');
+    const suffixClass = existingClasses.find(cls => cls.startsWith('feedback-area-'));
+
+    if (suffixClass) {
+        el.className = `feedback-area ${suffixClass} show ${type}`;
+    } else {
+        el.className = `feedback-area show ${type}`;
+    }
 }
 
 function updateStatsDisplay() {
@@ -751,5 +794,184 @@ function updateStatsDisplay() {
             const pct = Math.round((userStats.correctAnswers / userStats.totalAnswered) * 100);
             accEl.textContent = `${pct}%`;
         }
+    }
+}
+
+/* =========================================
+   AI HELP INTEGRATION
+   ========================================= */
+
+async function requestAIHelp() {
+    const question = currentSessionQuestions[currentQuestionIndex];
+    const state = questionState[currentQuestionIndex];
+
+    if (!state || state.correct) return; // Only for incorrect answers
+
+    const aiBtn = document.getElementById('aiHelpBtn');
+    const aiResponseArea = document.getElementById('aiResponseArea');
+
+    if (!aiBtn || !aiResponseArea) return;
+
+    // Disable button and show loading
+    aiBtn.disabled = true;
+    aiBtn.innerHTML = '<span class="ai-loading">⏳</span> Loading...';
+
+    try {
+        // Determine user's answer
+        let userAnswer;
+        if (question.type === 'multiple-choice' && state.selected >= 0) {
+            userAnswer = question.options[state.selected];
+        } else {
+            userAnswer = state.userAnswer || 'No answer provided';
+        }
+
+        // Determine correct answer
+        let correctAnswer;
+        if (question.type === 'multiple-choice') {
+            correctAnswer = question.options[question.correct];
+        } else {
+            correctAnswer = question.answer;
+        }
+
+        // Get AI explanation
+        const explanation = await getAIExplanation(
+            question.question,
+            correctAnswer,
+            userAnswer,
+            question.type,
+            topicNames[currentTopic]
+        );
+
+        // Display AI response
+        aiResponseArea.innerHTML = `
+            <div class="ai-response">
+                <div class="ai-response-header">
+                    <span class="ai-badge">🤖 AI Tutor</span>
+                </div>
+                <div class="ai-response-text">${explanation}</div>
+                <div class="ai-followup">
+                    <input type="text" 
+                           class="ai-followup-input" 
+                           id="aiFollowupInput" 
+                           placeholder="Still confused? Ask a follow-up question..."
+                           maxlength="200">
+                    <button class="btn-ai-followup" id="aiFollowupBtn">
+                        Ask Question
+                    </button>
+                </div>
+                <div class="ai-followup-response" id="aiFollowupResponse"></div>
+            </div>
+        `;
+
+        // Add event listener for follow-up question
+        const followupBtn = document.getElementById('aiFollowupBtn');
+        const followupInput = document.getElementById('aiFollowupInput');
+
+        if (followupBtn && followupInput) {
+            followupBtn.addEventListener('click', () => handleFollowupQuestion(question, correctAnswer, userAnswer, explanation));
+            followupInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleFollowupQuestion(question, correctAnswer, userAnswer, explanation);
+                }
+            });
+        }
+
+        // Update button
+        aiBtn.innerHTML = '<span class="ai-icon">✓</span> AI Help Provided';
+
+    } catch (error) {
+        console.error('AI Help Error:', error);
+
+        // Show error message
+        aiResponseArea.innerHTML = `
+            <div class="ai-error">
+                <div class="ai-error-title">⚠️ Unable to get AI help</div>
+                <div class="ai-error-text">${error.message}</div>
+                ${error.message.includes('API key') ?
+                '<div class="ai-error-hint">Please add your Gemini API key to gemini-config.js</div>' :
+                '<div class="ai-error-hint">Please try again in a moment.</div>'}
+            </div>
+        `;
+
+        // Re-enable button for retry
+        aiBtn.disabled = false;
+        aiBtn.innerHTML = '<span class="ai-icon">🤖</span> Try Again';
+    }
+}
+
+async function handleFollowupQuestion(question, correctAnswer, userAnswer, originalExplanation) {
+    const followupInput = document.getElementById('aiFollowupInput');
+    const followupBtn = document.getElementById('aiFollowupBtn');
+    const followupResponse = document.getElementById('aiFollowupResponse');
+
+    if (!followupInput || !followupBtn || !followupResponse) return;
+
+    const followupQuestion = followupInput.value.trim();
+    if (!followupQuestion) {
+        alert('Please enter a question.');
+        return;
+    }
+
+    // Show loading
+    followupBtn.disabled = true;
+    followupBtn.textContent = 'Loading...';
+    followupResponse.innerHTML = '<div class="ai-loading-text">⏳ Thinking...</div>';
+
+    try {
+        // Build context-aware prompt
+        const prompt = `You are a chemistry tutor. A student asked a follow-up question about a problem they got wrong.
+
+Original Question: ${question.question}
+Correct Answer: ${correctAnswer}
+Student's Wrong Answer: ${userAnswer}
+Your Previous Explanation: ${originalExplanation}
+
+Student's Follow-up Question: ${followupQuestion}
+
+Provide a clear, direct answer to their follow-up question. Be concise (2-3 sentences max).`;
+
+        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+        const response = await fetch(`${API_URL}?key=${GEMINI_CONFIG.apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1000,
+                    topP: 0.8,
+                    topK: 10
+                }
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to get response');
+
+        const data = await response.json();
+        const answer = data.candidates[0].content.parts[0].text;
+
+        // Display response
+        followupResponse.innerHTML = `
+            <div class="ai-followup-answer">
+                <div class="ai-followup-label">💬 Answer:</div>
+                <div class="ai-followup-text">${answer}</div>
+            </div>
+        `;
+
+        // Clear input and reset button
+        followupInput.value = '';
+        followupBtn.disabled = false;
+        followupBtn.textContent = 'Ask Another';
+
+    } catch (error) {
+        console.error('Follow-up Error:', error);
+        followupResponse.innerHTML = `
+            <div class="ai-error">
+                <div class="ai-error-text">Unable to answer. Please try again.</div>
+            </div>
+        `;
+        followupBtn.disabled = false;
+        followupBtn.textContent = 'Try Again';
     }
 }

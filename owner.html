@@ -59,6 +59,59 @@
                     <p class="text-secondary">Manage schools and assign admins (deans) to each institution</p>
                 </div>
 
+                <!-- Tab Management (Super Admin Only) -->
+                <div class="owner-section" id="tabManagementSection" style="display: none;">
+                    <h3>🎛️ Tab Management (Super Admin Only)</h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-lg);">
+                        Control which tabs are visible on the home page for all users
+                    </p>
+                    <div class="tab-toggles-grid">
+                        <div class="tab-toggle-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="toggle-attendance" class="tab-toggle" data-tab="attendance">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">📊 Attendance</span>
+                            </label>
+                        </div>
+                        <div class="tab-toggle-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="toggle-practice" class="tab-toggle" data-tab="practice">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">📚 Practice</span>
+                            </label>
+                        </div>
+                        <div class="tab-toggle-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="toggle-lms" class="tab-toggle" data-tab="lms">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">📈 LMS Dashboard</span>
+                            </label>
+                        </div>
+                        <div class="tab-toggle-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="toggle-dev" class="tab-toggle" data-tab="dev">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">🔧 Dev Panel</span>
+                            </label>
+                        </div>
+                        <div class="tab-toggle-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="toggle-owner" class="tab-toggle" data-tab="owner">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">👑 Owner Panel</span>
+                            </label>
+                        </div>
+                        <div class="tab-toggle-item">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="toggle-profile" class="tab-toggle" data-tab="profile">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-text">👤 Profile</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="tab-management-status" id="tabManagementStatus"></div>
+                </div>
+
                 <!-- Create School Section -->
                 <div class="owner-section">
                     <h3>🏫 Create New School</h3>

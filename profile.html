@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Chem 1A Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://yreeccqkuhijinfrlxzl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyZWVjY3FrdWhpamluZnJseHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyODg5ODcsImV4cCI6MjA4MDg2NDk4N30.EmmhQhihfq2Yl661kkklzNNuTBOYc0X1WJAkaZ3RHFE';
+        let supabase = null;
+        if (typeof window.supabase !== 'undefined') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    </script>
+
+    <!-- Scripts -->
+    <script src="roles.js"></script>
+    <script src="gemini-config.js"></script>
+    <script src="ai-helper.js"></script>
+    <script src="profile.js" defer></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Chem 1A Tutor</h1>
+                </div>
+                <div class="header-right">
+                    <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="profile-container">
+                <!-- User Profile Header -->
+                <div class="profile-header-section">
+                    <div class="profile-user-info">
+                        <div class="profile-avatar" id="profileAvatar">U</div>
+                        <div class="profile-details">
+                            <h2 id="profileName">User</h2>
+                            <p class="profile-email" id="profileEmail">user@example.com</p>
+                        </div>
+                    </div>
+                    <div class="profile-stats-grid">
+                        <div class="profile-stat-card">
+                            <div class="stat-value" id="totalQuizzes">0</div>
+                            <div class="stat-label">Total Quizzes</div>
+                        </div>
+                        <div class="profile-stat-card">
+                            <div class="stat-value" id="totalQuestions">0</div>
+                            <div class="stat-label">Questions Answered</div>
+                        </div>
+                        <div class="profile-stat-card">
+                            <div class="stat-value" id="overallAccuracy">0%</div>
+                            <div class="stat-label">Overall Accuracy</div>
+                        </div>
+                        <div class="profile-stat-card">
+                            <div class="stat-value" id="bestTopic">-</div>
+                            <div class="stat-label">Best Topic</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Chat Section -->
+                <div class="ai-chat-section">
+                    <h3>🤖 AI Chemistry Tutor</h3>
+                    <p class="text-secondary">Ask me anything about your quizzes or chemistry concepts!</p>
+
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-message ai-message">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    <p>Hi! I'm your AI chemistry tutor. I can help you understand your quiz results,
+                                        explain concepts, or answer any chemistry questions. Try asking me about a
+                                        specific quiz or topic!</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" class="chat-input"
+                                placeholder="Ask about a quiz or chemistry concept..." maxlength="500">
+                            <button class="btn-chat-send" id="chatSendBtn">
+                                <span>Send</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz History Section -->
+                <div class="quiz-history-section">
+                    <h3>📚 Quiz History</h3>
+                    <div id="quizHistoryContainer" class="quiz-history-grid">
+                        <!-- Quiz cards will be loaded here -->
+                    </div>
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <p>No quiz history yet. Start practicing to see your progress!</p>
+                        <a href="practice.html" class="btn btn-primary">Start Practicing</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

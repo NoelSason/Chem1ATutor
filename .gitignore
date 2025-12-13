@@ -1,6 +1,8 @@
 node_modules/
 .DS_Store
 node_modules/
-.env
+.DS_Store
 supabase-config.js
+gemini-config.js
+
 .gemini/

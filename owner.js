@@ -395,3 +395,82 @@ function copyInviteLink() {
 
 // Note: Real-time subscriptions removed to fix compatibility issues
 // The accepted invites list will refresh when you reopen the school detail modal
+
+// ==========================================
+// TAB MANAGEMENT (Super Admin Only)
+// ==========================================
+
+const SUPER_ADMIN_EMAIL = 'cubemasternoel@gmail.com';
+
+async function initTabManagement() {
+    const user = JSON.parse(localStorage.getItem('chemTutorUser'));
+
+    // Only show for super admin
+    if (user && user.email === SUPER_ADMIN_EMAIL) {
+        document.getElementById('tabManagementSection').style.display = 'block';
+        await loadTabSettings();
+        setupTabToggles();
+    }
+}
+
+async function loadTabSettings() {
+    try {
+        const settings = await getAppSettingsDB();
+
+        // Update toggle states
+        const tabs = ['attendance', 'practice', 'lms', 'dev', 'owner', 'profile'];
+        tabs.forEach(tab => {
+            const toggle = document.getElementById(`toggle-${tab}`);
+            if (toggle) {
+                toggle.checked = settings[tab] !== false; // Default to true if not set
+            }
+        });
+
+        console.log('✅ Tab settings loaded:', settings);
+    } catch (error) {
+        console.error('Error loading tab settings:', error);
+        showNotification('Error loading tab settings', 'error');
+    }
+}
+
+function setupTabToggles() {
+    const toggles = document.querySelectorAll('.tab-toggle');
+
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', async (e) => {
+            const tab = e.target.dataset.tab;
+            const enabled = e.target.checked;
+
+            try {
+                // Get current settings
+                const settings = await getAppSettingsDB();
+
+                // Update the specific tab
+                settings[tab] = enabled;
+
+                // Save to database
+                const user = JSON.parse(localStorage.getItem('chemTutorUser'));
+                await updateAppSettingsDB(settings, user.email);
+
+                // Show status
+                const status = document.getElementById('tabManagementStatus');
+                status.innerHTML = `<div class="success-message">✅ ${tab.charAt(0).toUpperCase() + tab.slice(1)} tab ${enabled ? 'enabled' : 'disabled'}</div>`;
+                setTimeout(() => {
+                    status.innerHTML = '';
+                }, 3000);
+
+                console.log(`✅ Tab "${tab}" ${enabled ? 'enabled' : 'disabled'}`);
+            } catch (error) {
+                console.error('Error updating tab setting:', error);
+                showNotification(`Error updating ${tab} tab`, 'error');
+                // Revert toggle
+                e.target.checked = !enabled;
+            }
+        });
+    });
+}
+
+// Initialize tab management when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initTabManagement();
+});

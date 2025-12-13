@@ -381,4 +381,90 @@ async function addAdminToSchoolDB(email, schoolId) {
     }
 }
 
+// ==========================================
+// APP SETTINGS (Super Admin Only)
+// ==========================================
+
+async function getAppSettingsDB() {
+    const { data, error } = await supabase
+        .from('app_settings')
+        .select('*')
+        .eq('setting_key', 'enabled_tabs')
+        .single();
+
+    if (error) {
+        console.error('Error loading app settings:', error);
+        // Return default if not found
+        return {
+            attendance: true,
+            practice: true,
+            lms: true,
+            dev: true,
+            owner: true,
+            profile: true
+        };
+    }
+
+    return data.setting_value;
+}
+
+async function updateAppSettingsDB(settings, userEmail) {
+    const { data, error } = await supabase
+        .from('app_settings')
+        .update({
+            setting_value: settings,
+            updated_at: new Date().toISOString(),
+            updated_by: userEmail
+        })
+        .eq('setting_key', 'enabled_tabs')
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data;
+}
+
+// ==========================================
+// QUIZ ATTEMPTS
+// ==========================================
+
+async function saveQuizAttemptDB(quizData) {
+    const { data, error } = await supabase
+        .from('quiz_attempts')
+        .insert([{
+            user_email: quizData.userEmail,
+            topic: quizData.topic,
+            score: quizData.score,
+            total: quizData.total,
+            date: quizData.date,
+            questions: quizData.questions,
+            answers: quizData.answers
+        }])
+        .select()
+        .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+}
+
+async function getQuizAttemptsDB(userEmail) {
+    const { data, error } = await supabase
+        .from('quiz_attempts')
+        .select('*')
+        .eq('user_email', userEmail)
+        .order('date', { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    // Transform to match localStorage format
+    return data.map(attempt => ({
+        id: attempt.id,
+        topic: attempt.topic,
+        score: attempt.score,
+        total: attempt.total,
+        date: attempt.date,
+        questions: attempt.questions,
+        answers: attempt.answers
+    }));
+}
+
 console.log('✅ Supabase database wrapper loaded');

@@ -260,7 +260,7 @@
         <main class="landing-main">
             <div class="mode-selection">
                 <!-- Attendance Mode -->
-                <a href="attendance.html" class="mode-card">
+                <a href="attendance.html" class="mode-card" data-tab="attendance">
                     <div class="mode-icon">📊</div>
                     <h2 class="mode-title">Attendance</h2>
                     <p class="mode-description">
@@ -275,7 +275,7 @@
                 </a>
 
                 <!-- Practice Mode -->
-                <a href="practice.html" class="mode-card">
+                <a href="practice.html" class="mode-card" data-tab="practice">
                     <div class="mode-icon">📚</div>
                     <h2 class="mode-title">Practice</h2>
                     <p class="mode-description">
@@ -290,7 +290,7 @@
                 </a>
 
                 <!-- LMS Dashboard Mode (Teachers + Admin Only) -->
-                <a href="lms.html" class="mode-card" id="lmsCard" style="display: none;">
+                <a href="lms.html" class="mode-card" id="lmsCard" data-tab="lms" style="display: none;">
                     <div class="mode-icon">📈</div>
                     <h2 class="mode-title">LMS Dashboard</h2>
                     <p class="mode-description">
@@ -305,7 +305,7 @@
                 </a>
 
                 <!-- Dev Panel (Admin Only) -->
-                <a href="dev.html" class="mode-card" id="devCard" style="display: none;">
+                <a href="dev.html" class="mode-card" id="devCard" data-tab="dev" style="display: none;">
                     <div class="mode-icon">🔧</div>
                     <h2 class="mode-title">Dev Panel</h2>
                     <p class="mode-description">
@@ -320,7 +320,7 @@
                 </a>
 
                 <!-- Owner Panel (Owner Only) -->
-                <a href="owner.html" class="mode-card" id="ownerCard" style="display: none;">
+                <a href="owner.html" class="mode-card" id="ownerCard" data-tab="owner" style="display: none;">
                     <div class="mode-icon">👑</div>
                     <h2 class="mode-title">Owner Panel</h2>
                     <p class="mode-description">
@@ -335,7 +335,7 @@
                 </a>
 
                 <!-- Login/Profile Mode -->
-                <a href="practice.html" class="mode-card" id="profileCard">
+                <a href="profile.html" class="mode-card" id="profileCard" data-tab="profile">
                     <div class="mode-icon">👤</div>
                     <h2 class="mode-title">Profile</h2>
                     <p class="mode-description">
@@ -353,6 +353,7 @@
     </div>
 
     <script src="roles.js"></script>
+    <script src="supabase-db.js"></script>
     <script>
         // Initialize Supabase (works on both localhost and Vercel)
         const SUPABASE_URL = 'https://yreeccqkuhijinfrlxzl.supabase.co';
@@ -423,9 +424,40 @@
                 window.location.href = 'practice.html';
             });
 
-            // Update card visibility based on user role
+            // Load app settings and update card visibility
+            await loadAppSettings();
             updateCardVisibility();
         });
+
+        // Load app settings to hide disabled tabs
+        async function loadAppSettings() {
+            try {
+                // Check if current user is super admin
+                const user = JSON.parse(localStorage.getItem('chemTutorUser') || 'null');
+                const isSuperAdmin = user && user.email === 'cubemasternoel@gmail.com';
+
+                // Super admin always sees all tabs
+                if (isSuperAdmin) {
+                    console.log('👑 Super admin detected - showing all tabs');
+                    return;
+                }
+
+                // For everyone else (including non-logged-in users), hide disabled tabs
+                const settings = await getAppSettingsDB();
+
+                const tabs = ['attendance', 'practice', 'lms', 'dev', 'owner', 'profile'];
+                tabs.forEach(tab => {
+                    const card = document.querySelector(`[data-tab="${tab}"]`);
+                    if (card && settings[tab] === false) {
+                        card.style.display = 'none';
+                        console.log(`🚫 Tab "${tab}" is disabled`);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading app settings:', error);
+                // Continue anyway - show all tabs if settings can't be loaded
+            }
+        }
 
         function updateCardVisibility() {
             const user = JSON.parse(localStorage.getItem('chemTutorUser') || 'null');
