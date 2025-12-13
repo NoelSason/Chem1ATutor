@@ -177,6 +177,10 @@ function logout() {
         </svg>
         Login with Google
     `;
+
+    // Hide streak display
+    const streakDisplay = document.getElementById('streakDisplay');
+    if (streakDisplay) streakDisplay.classList.add('hidden');
 }
 
 function updateUserUI() {
