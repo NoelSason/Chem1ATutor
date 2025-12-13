@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistake Journal - Chem 1A Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="supabase-db.js"></script>
+    <style>
+        .journal-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .journal-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .journal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .mistake-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .mistake-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-500);
+        }
+
+        .mistake-topic {
+            display: inline-block;
+            background: var(--bg-tertiary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .mistake-question {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .answer-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .user-answer {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .correct-answer {
+            color: #22c55e;
+            font-weight: 500;
+        }
+
+        .notes-section {
+            margin-top: 16px;
+        }
+
+        .notes-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 8px;
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .reviewed-badge {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Chem 1A Tutor</h1>
+                </a>
+            </div>
+
+            <div class="header-right">
+                <a href="practice.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Practice</a>
+                <a href="leaderboard.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Leaderboard</a>
+                <a href="profile.html" class="user-profile hidden" id="userProfile"
+                    style="text-decoration: none; color: inherit;">
+                    <span class="user-name" id="userName">User</span>
+                    <div class="avatar" id="userAvatar">U</div>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="journal-container">
+            <div class="journal-header">
+                <h1 class="journal-title">Mistake Journal</h1>
+                <p class="subtitle">Review your errors and track your learning progress</p>
+            </div>
+
+            <div id="loadingState" style="text-align: center; padding: 40px; display: none;">
+                Loading your journal...
+            </div>
+
+            <div id="emptyState" style="text-align: center; padding: 60px 20px; display: none;">
+                <div style="font-size: 48px; margin-bottom: 16px;">✨</div>
+                <h3>No mistakes yet!</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Great job! Or start practicing to populate
+                    your journal.</p>
+                <a href="practice.html" class="btn btn-primary">Start Practice</a>
+            </div>
+
+            <div id="mistakesList">
+                <!-- Mistakes will be loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('chemTutorUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateHeader();
+                loadMistakes();
+            } else {
+                window.location.href = 'index.html'; // Redirect if not logged in
+            }
+        });
+
+        function updateHeader() {
+            const profile = document.getElementById('userProfile');
+            const nameEl = document.getElementById('userName');
+            const avatarEl = document.getElementById('userAvatar');
+
+            nameEl.textContent = currentUser.name;
+            profile.classList.remove('hidden');
+
+            if (currentUser.avatar && currentUser.avatar.startsWith('http')) {
+                avatarEl.style.backgroundImage = `url(${currentUser.avatar})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.textContent = '';
+            } else {
+                avatarEl.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadMistakes() {
+            const loading = document.getElementById('loadingState');
+            const list = document.getElementById('mistakesList');
+            const empty = document.getElementById('emptyState');
+
+            loading.style.display = 'block';
+            list.innerHTML = '';
+            empty.style.display = 'none';
+
+            try {
+                if (typeof getMistakesDB !== 'function') {
+                    setTimeout(loadMistakes, 500);
+                    return;
+                }
+
+                const mistakes = await getMistakesDB(currentUser.email);
+                loading.style.display = 'none';
+
+                if (mistakes.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                list.innerHTML = mistakes.map(mistake => `
+                    <div class="mistake-card" id="mistake-${mistake.id}">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <span class="mistake-topic">${mistake.topic || 'General'}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                                ${new Date(mistake.created_at).toLocaleDateString()}
+                            </span>
+                        </div>
+                        
+                        <div class="mistake-question">
+                            ${mistake.question.question}
+                        </div>
+                        
+                        <div class="answer-grid">
+                            <div>
+                                <div class="answer-label">Your Answer</div>
+                                <div class="user-answer">${mistake.user_answer || '-'}</div>
+                            </div>
+                            <div>
+                                <div class="answer-label">Correct Answer</div>
+                                <div class="correct-answer">${mistake.correct_answer || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="notes-section">
+                            <div class="answer-label" style="margin-bottom: 8px;">Your Notes</div>
+                            <textarea 
+                                class="notes-input" 
+                                placeholder="Why did you get this wrong? Add notes here..."
+                                onchange="saveNotes('${mistake.id}', this.value)"
+                            >${mistake.notes || ''}</textarea>
+                        </div>
+                        
+                        <div class="action-row">
+                            ${mistake.reviewed ? `
+                                <div class="reviewed-badge">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                        <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Reviewed
+                                </div>
+                            ` : `
+                                <button class="btn btn-secondary btn-sm" onclick="markReviewed('${mistake.id}')">
+                                    Mark as Reviewed
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading mistakes:', error);
+                loading.style.display = 'none';
+                list.innerHTML = '<p style="color: #ef4444; text-align: center;">Failed to load mistakes.</p>';
+            }
+        }
+
+        async function saveNotes(mistakeId, notes) {
+            try {
+                await updateMistakeNotesDB(mistakeId, notes);
+            } catch (error) {
+                console.error('Error saving notes:', error);
+                alert('Failed to save notes');
+            }
+        }
+
+        async function markReviewed(mistakeId) {
+            try {
+                await markMistakeReviewedDB(mistakeId);
+                // Refresh list or update UI locally
+                const card = document.getElementById(`mistake-${mistakeId}`);
+                const btn = card.querySelector('button');
+                if (btn) {
+                    btn.outerHTML = `
+                        <div class="reviewed-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Reviewed
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error marking reviewed:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>
