@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Challenge - Chem 1A Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="supabase-db.js"></script>
+    <!-- Questions Data -->
+    <script src="question_data.js"></script>
+    <style>
+        .challenge-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .challenge-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .challenge-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF6B00, #FF4500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .challenge-card {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .challenge-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 107, 0, 0.1);
+            color: #FF6B00;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .points-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            color: #FFD700;
+            margin-bottom: 24px;
+            font-size: 1.2rem;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            padding: 16px 24px;
+            border-radius: 12px;
+            text-align: left;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-btn:hover {
+            background: var(--primary-500);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.selected {
+            background: var(--primary-500);
+            color: white;
+            border-color: var(--primary-600);
+        }
+
+        .timer-display {
+            margin-top: 24px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Success/Fail States */
+        .result-container {
+            text-align: center;
+            display: none;
+        }
+
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .completed-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Chem 1A Tutor</h1>
+                </a>
+            </div>
+
+            <div class="header-right">
+                <a href="practice.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Practice</a>
+                <a href="flashcards.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Flashcards</a>
+                <a href="leaderboard.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Leaderboard</a>
+                <a href="mistakes.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Journal</a>
+                <a href="profile.html" class="user-profile hidden" id="userProfile"
+                    style="text-decoration: none; color: inherit;">
+                    <span class="user-name" id="userName">User</span>
+                    <div class="avatar" id="userAvatar">U</div>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="challenge-container">
+            <div class="challenge-header">
+                <h1 class="challenge-title">Daily Challenge</h1>
+                <p class="subtitle">Complete the challenge to earn bonus points!</p>
+            </div>
+
+            <div id="loading" style="display: none; padding: 40px;">
+                Loading challenge...
+            </div>
+
+            <div id="completedState" class="result-container">
+                <div class="result-icon">✅</div>
+                <h2>Challenge Completed!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">You've already finished today's challenge.
+                    Come back tomorrow!</p>
+                <div id="completionStats"
+                    style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px; margin-bottom: 24px; display: inline-block;">
+                    <!-- Stats injected here -->
+                </div>
+                <div>
+                    <a href="practice.html" class="btn btn-secondary">Go to Practice</a>
+                    <a href="leaderboard.html" class="btn btn-primary" style="margin-left: 10px;">View Leaderboard</a>
+                </div>
+            </div>
+
+            <div id="challengeCard" class="challenge-card" style="display: none;">
+                <div class="challenge-badge">
+                    ⚡ Question of the Day
+                </div>
+                <div class="points-badge">
+                    <span>🏆</span> <span id="pointsValue">50</span> Points
+                </div>
+
+                <div id="questionContent">
+                    <div class="question-text" id="questionText">Loading...</div>
+                    <div class="options-grid" id="optionsGrid">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+
+                <div class="timer-display" id="timer">--:--</div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let currentChallenge = null;
+        let selectedOption = null;
+
+        // Question Data will be loaded from question_data.js
+        // We'll mock it here temporarily if needed, but we should reuse the data file logic
+        // For simplicity, I'll copy a small set of questions or rely on window.questions if practice.js exposes it?
+        // Actually, practice.js has questions inside it. I don't have a separate `question_data.js` yet. 
+        // I should probably extract questions to a separate file, but for now I'll include a mock pool here or define a simple pool.
+
+        // Wait, I'll define a simple pool of questions here for the challenge generation for now. 
+        const CHALLENGE_POOL = [
+            {
+                topic: 'Atomic Structure',
+                question: 'Which of the following elements has the highest first ionization energy?',
+                options: ['Sodium (Na)', 'Aluminum (Al)', 'Sulfur (S)', 'Chlorine (Cl)'],
+                correct: 3,
+                explanation: 'Ionization energy generally increases across a period. Chlorine is furthest to the right.'
+            },
+            {
+                topic: 'Chemical Bonds',
+                question: 'Which molecule contains a triple bond?',
+                options: ['O2', 'N2', 'Cl2', 'H2O'],
+                correct: 1,
+                explanation: 'Nitrogen gas (N2) consists of two nitrogen atoms bonded by a triple covalent bond.'
+            },
+            {
+                topic: 'Stoichiometry',
+                question: 'What is the molar mass of water (H2O)?',
+                options: ['16 g/mol', '17 g/mol', '18 g/mol', '20 g/mol'],
+                correct: 2,
+                explanation: 'H (1.008) * 2 + O (15.999) ≈ 18.015 g/mol'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('chemTutorUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateHeader();
+                initChallenge();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        function updateHeader() {
+            const profile = document.getElementById('userProfile');
+            const nameEl = document.getElementById('userName');
+            const avatarEl = document.getElementById('userAvatar');
+
+            nameEl.textContent = currentUser.name;
+            profile.classList.remove('hidden');
+
+            if (currentUser.avatar && currentUser.avatar.startsWith('http')) {
+                avatarEl.style.backgroundImage = `url(${currentUser.avatar})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.textContent = '';
+            } else {
+                avatarEl.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+        }
+
+        async function initChallenge() {
+            const loading = document.getElementById('loading');
+            const card = document.getElementById('challengeCard');
+            const completed = document.getElementById('completedState');
+
+            loading.style.display = 'block';
+
+            try {
+                // Check if user has already completed today's challenge
+                // Ideally we'd have a specific DB function, but we can query completions
+                // For now, let's load today's challenge first
+                let challenge = await getTodaysChallengeDB();
+
+                if (!challenge) {
+                    // Create one!
+                    console.log('No challenge found, creating one...');
+                    challenge = await createTodaysChallenge();
+                }
+
+                currentChallenge = challenge;
+
+                // Check if user completed it
+                const completions = await getUserChallengeCompletionsDB(currentUser.email);
+                const todaysCompletion = completions.find(c => c.challenge_id === challenge.id);
+
+                loading.style.display = 'none';
+
+                if (todaysCompletion) {
+                    // Show completed state
+                    renderCompleted(todaysCompletion);
+                    completed.style.display = 'block';
+                } else {
+                    // Show challenge
+                    renderChallenge(challenge);
+                    card.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error initializing challenge:', error);
+                loading.textContent = 'Failed to load challenge. Please try again later.';
+            }
+        }
+
+        async function createTodaysChallenge() {
+            // Simplified challenge creation
+            const today = new Date().toISOString().split('T')[0];
+            const randomQ = CHALLENGE_POOL[Math.floor(Math.random() * CHALLENGE_POOL.length)];
+
+            // We need to call Supabase to insert
+            const { data, error } = await supabase
+                .from('daily_challenges')
+                .insert([{
+                    challenge_date: today,
+                    challenge_type: 'qotd',
+                    question_ids: ['random'], // Placeholder
+                    bonus_points: 50,
+                    // Store the question data directly for simplicity if I haven't set up a separate questions table
+                    // Wait, my DB schema stores question_ids but I don't have a questions table. 
+                    // I'll repurpose 'topic' or add a JSON column if I could, but schema is fixed.
+                    // Actually, I can put JSON in 'topic' or abuse 'question_ids' array to store the question index from my hardcoded pool
+                    // Let's store the entire question as a JSON string in 'topic' (hacky but works without migration)
+                    // OR better, just store the key fields in the columns we have.
+                    // Actually, let's just pick one DETERMINISTICALLY based on date, so all users get same one without DB storage needed for question content.
+                    // But I need to create the row to link completions to it.
+                    topic: JSON.stringify(randomQ)
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                // If unique violation, fetch again (someone else made it)
+                if (error.code === '23505') {
+                    return await getTodaysChallengeDB();
+                }
+                throw error;
+            }
+            return data;
+        }
+
+        function renderChallenge(challenge) {
+            // Parse question from 'topic' column (see hack above)
+            let questionData;
+            try {
+                questionData = JSON.parse(challenge.topic);
+            } catch (e) {
+                // Fallback deterministic selection
+                const seed = new Date().getDate();
+                questionData = CHALLENGE_POOL[seed % CHALLENGE_POOL.length];
+            }
+
+            document.getElementById('questionText').textContent = questionData.question;
+
+            const optionsHtml = questionData.options.map((opt, idx) => `
+                <button class="option-btn" onclick="selectOption(this, ${idx}, ${questionData.correct})">
+                    ${opt}
+                </button>
+            `).join('');
+
+            document.getElementById('optionsGrid').innerHTML = optionsHtml;
+        }
+
+        async function selectOption(btn, index, correctIndex) {
+            if (activeSubmission) return;
+            activeSubmission = true;
+
+            const isCorrect = index === correctIndex;
+
+            // Visual feedback
+            if (isCorrect) {
+                btn.style.background = '#22c55e';
+                btn.style.borderColor = '#16a34a';
+                btn.textContent += ' ✅';
+                // Success sound?
+            } else {
+                btn.style.background = '#ef4444';
+                btn.style.borderColor = '#dc2626';
+                btn.textContent += ' ❌';
+                // Show correct one
+                const buttons = document.querySelectorAll('.option-btn');
+                buttons[correctIndex].style.background = '#22c55e';
+            }
+
+            // Wait a moment then submit
+            setTimeout(async () => {
+                const points = isCorrect ? 50 : 5; // 50 for win, 5 for participation
+
+                try {
+                    await completeChallengeDB(
+                        currentUser.email,
+                        currentChallenge.id,
+                        isCorrect ? 1 : 0,
+                        1,
+                        0, // Time taken placeholder
+                        points
+                    );
+
+                    // Also update leaderboard
+                    if (typeof updateLeaderboardDB === 'function') {
+                        await updateLeaderboardDB(currentUser.email, currentUser.name, points);
+                    }
+
+                    // Also award achievement?
+                    if (isCorrect && typeof awardAchievementDB === 'function') {
+                        await awardAchievementDB(currentUser.email, 'challenge', 'First Challenge!', { date: new Date().toISOString() });
+                    }
+
+                    location.reload(); // Reload to show success state
+                } catch (error) {
+                    console.error('Submission failed', error);
+                    alert('Failed to submit challenge');
+                    activeSubmission = false;
+                }
+            }, 1500);
+        }
+
+        let activeSubmission = false;
+
+        function renderCompleted(completion) {
+            const stats = document.getElementById('completionStats');
+            const won = completion.score > 0;
+
+            stats.innerHTML = `
+                <div style="font-size: 1.2rem; font-weight: 600; color: ${won ? '#22c55e' : '#ef4444'}">
+                    ${won ? 'Correct Answer!' : 'Incorrect'}
+                </div>
+                <div style="font-size: 2rem; font-weight: 800; color: #FFD700; margin-top: 8px;">
+                    +${completion.points_earned} PTS
+                </div>
+            `;
+
+            document.querySelector('.result-icon').textContent = won ? '🎉' : '👍';
+        }
+
+    </script>
+</body>
+
+</html>
