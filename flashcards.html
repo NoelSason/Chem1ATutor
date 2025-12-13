@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards - Chem 1A Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="supabase-db.js"></script>
+    <style>
+        .flashcard-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .flashcard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .flashcard-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        /* Flashcard Scene */
+        .scene {
+            width: 100%;
+            height: 400px;
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 24px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .card-face--front {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+        }
+
+        .card-face--back {
+            background: var(--bg-secondary);
+            transform: rotateY(180deg);
+        }
+
+        .card-topic {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            padding: 6px 16px;
+            background: var(--primary-500);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .card-content {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .card-hint {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .controls.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .rating-btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+            color: white;
+            min-width: 100px;
+        }
+
+        .rating-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .rating-again {
+            background: #ef4444;
+        }
+
+        .rating-hard {
+            background: #f97316;
+        }
+
+        .rating-good {
+            background: #22c55e;
+        }
+
+        .rating-easy {
+            background: #3b82f6;
+        }
+
+        .progress-text {
+            margin-top: 24px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .flip-instruction {
+            position: absolute;
+            bottom: 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Chem 1A Tutor</h1>
+                </a>
+            </div>
+
+            <div class="header-right">
+                <a href="practice.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Practice</a>
+                <a href="leaderboard.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Leaderboard</a>
+                <a href="mistakes.html" class="btn btn-secondary"
+                    style="margin-right: 10px; border: none; background: transparent;">Journal</a>
+                <a href="profile.html" class="user-profile hidden" id="userProfile"
+                    style="text-decoration: none; color: inherit;">
+                    <span class="user-name" id="userName">User</span>
+                    <div class="avatar" id="userAvatar">U</div>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flashcard-container">
+            <div class="flashcard-header">
+                <h1 class="flashcard-title">Daily Review</h1>
+                <p class="subtitle" id="subtitle">Loading your cards...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" style="text-align: center; display: none;">
+                <div style="font-size: 64px; margin-bottom: 24px;">🎉</div>
+                <h2 style="margin-bottom: 16px;">All Caught Up!</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">You've reviewed all your due cards for
+                    now. Come back later!</p>
+                <a href="practice.html" class="btn btn-primary">Start New Practice</a>
+            </div>
+
+            <!-- Card Scene -->
+            <div class="scene" id="cardScene" style="display: none;">
+                <div class="card" id="flashcard">
+                    <div class="card-face card-face--front">
+                        <div class="card-topic" id="cardTopic">Topic</div>
+                        <div class="card-content" id="cardFront">...</div>
+                        <div class="flip-instruction">Click to flip</div>
+                    </div>
+                    <div class="card-face card-face--back">
+                        <div class="card-topic">Answer</div>
+                        <div class="card-content" id="cardBack">...</div>
+                        <div class="card-hint" id="cardExplanation"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls" id="controls">
+                <button class="rating-btn rating-again" onclick="rateCard(1)">Again</button>
+                <button class="rating-btn rating-hard" onclick="rateCard(3)">Hard</button>
+                <button class="rating-btn rating-good" onclick="rateCard(4)">Good</button>
+                <button class="rating-btn rating-easy" onclick="rateCard(5)">Easy</button>
+            </div>
+
+            <div class="progress-text" id="progressText"></div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let dueCards = [];
+        let currentCardIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('chemTutorUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateHeader();
+                loadCards();
+            } else {
+                window.location.href = 'index.html';
+            }
+
+            // Flip handler
+            const card = document.getElementById('flashcard');
+            card.addEventListener('click', () => {
+                if (dueCards.length > 0) {
+                    card.classList.toggle('is-flipped');
+                    if (card.classList.contains('is-flipped')) {
+                        document.getElementById('controls').classList.add('visible');
+                    } else {
+                        document.getElementById('controls').classList.remove('visible');
+                    }
+                }
+            });
+        });
+
+        function updateHeader() {
+            const profile = document.getElementById('userProfile');
+            const nameEl = document.getElementById('userName');
+            const avatarEl = document.getElementById('userAvatar');
+
+            nameEl.textContent = currentUser.name;
+            profile.classList.remove('hidden');
+
+            if (currentUser.avatar && currentUser.avatar.startsWith('http')) {
+                avatarEl.style.backgroundImage = `url(${currentUser.avatar})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.textContent = '';
+            } else {
+                avatarEl.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadCards() {
+            if (typeof getDueReviewsDB !== 'function') {
+                setTimeout(loadCards, 500);
+                return;
+            }
+
+            try {
+                dueCards = await getDueReviewsDB(currentUser.email);
+
+                if (dueCards.length > 0) {
+                    showCard(0);
+                    document.getElementById('cardScene').style.display = 'block';
+                    document.getElementById('subtitle').textContent = `You have ${dueCards.length} cards due for review`;
+                    updateProgress();
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading cards:', error);
+                document.getElementById('subtitle').textContent = 'Error loading cards';
+            }
+        }
+
+        function showCard(index) {
+            currentCardIndex = index;
+            const cardData = dueCards[index];
+            const card = document.getElementById('flashcard');
+
+            // Reset state
+            card.classList.remove('is-flipped');
+            document.getElementById('controls').classList.remove('visible');
+
+            // Update content
+            document.getElementById('cardTopic').textContent = cardData.questions?.topic || 'Review'; // Assuming join or data structure
+
+            // Handle different question formats if needed
+            const questionData = cardData.question_data || {};
+            document.getElementById('cardFront').textContent = questionData.question || 'Error loading question';
+
+            if (questionData.type === 'multiple-choice') {
+                document.getElementById('cardBack').textContent = questionData.options[questionData.correct];
+            } else {
+                document.getElementById('cardBack').textContent = questionData.answer;
+            }
+
+            document.getElementById('cardExplanation').textContent = questionData.explanation || '';
+        }
+
+        async function rateCard(rating) {
+            if (currentCardIndex >= dueCards.length) return;
+
+            const card = dueCards[currentCardIndex];
+
+            try {
+                // Update schedule in DB
+                if (typeof scheduleReviewDB === 'function') {
+                    await scheduleReviewDB(
+                        currentUser.email,
+                        card.question_id,
+                        card.question_data,
+                        rating
+                    );
+                }
+
+                // Move to next card
+                currentCardIndex++;
+                if (currentCardIndex < dueCards.length) {
+                    // Small delay for smooth transition
+                    setTimeout(() => {
+                        showCard(currentCardIndex);
+                        updateProgress();
+                    }, 300);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error rating card:', error);
+            }
+        }
+
+        function showEmptyState() {
+            document.getElementById('cardScene').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('subtitle').textContent = 'All done!';
+            document.getElementById('progressText').textContent = '';
+        }
+
+        function updateProgress() {
+            document.getElementById('progressText').textContent =
+                `Card ${currentCardIndex + 1} of ${dueCards.length}`;
+        }
+    </script>
+</body>
+
+</html>
