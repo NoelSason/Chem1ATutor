@@ -431,6 +431,145 @@ function saveQuizAttempt() {
             console.error('Failed to save quiz to database:', err);
             // Continue anyway - localStorage backup exists
         });
+
+        // Track advanced learning features
+        trackAdvancedFeatures(score, 10, questionDetails, userAnswers).catch(err => {
+            console.error('Failed to track advanced features:', err);
+        });
+    }
+}
+
+// Advanced Learning Features Tracking
+async function trackAdvancedFeatures(score, total, questions, answers) {
+    if (!currentUser || !currentUser.email) return;
+
+    const userEmail = currentUser.email;
+    const userName = currentUser.name || 'Anonymous';
+    const topic = topicNames[currentTopic];
+
+    try {
+        // 1. Update user progress & mastery level
+        if (typeof updateUserProgressDB === 'function') {
+            await updateUserProgressDB(userEmail, topic, score, total);
+            console.log('✅ Progress updated');
+        }
+
+        // 2. Update streak
+        if (typeof updateStreakDB === 'function') {
+            const streak = await updateStreakDB(userEmail);
+            console.log(`🔥 Streak: ${streak.current_streak} days`);
+
+            // Check for streak achievements
+            if (streak.current_streak === 7 && typeof awardAchievementDB === 'function') {
+                await awardAchievementDB(userEmail, 'streak', '7-Day Streak', { streak: 7 });
+            } else if (streak.current_streak === 30) {
+                await awardAchievementDB(userEmail, 'streak', '30-Day Streak', { streak: 30 });
+            } else if (streak.current_streak === 100) {
+                await awardAchievementDB(userEmail, 'streak', '100-Day Streak', { streak: 100 });
+            }
+        }
+
+        // 3. Save mistakes to journal
+        if (typeof saveMistakeDB === 'function') {
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
+                const userAnswer = answers[i];
+
+                // Check if answer is correct
+                let isCorrect = false;
+                if (question.type === 'multiple-choice') {
+                    isCorrect = userAnswer === question.correct;
+                } else {
+                    const correctAnswer = (question.answer || '').toLowerCase().trim();
+                    const userAnswerText = (userAnswer || '').toLowerCase().trim();
+                    isCorrect = userAnswerText === correctAnswer;
+                }
+
+                // Save to mistake journal if incorrect
+                if (!isCorrect) {
+                    let correctAnswerText;
+                    if (question.type === 'multiple-choice') {
+                        correctAnswerText = question.options[question.correct];
+                    } else {
+                        correctAnswerText = question.answer;
+                    }
+
+                    let userAnswerText;
+                    if (question.type === 'multiple-choice' && userAnswer !== undefined) {
+                        userAnswerText = question.options[userAnswer] || 'No answer';
+                    } else {
+                        userAnswerText = userAnswer || 'No answer';
+                    }
+
+                    await saveMistakeDB(userEmail, question, userAnswerText, correctAnswerText, topic);
+                }
+            }
+            console.log('📝 Mistakes saved to journal');
+        }
+
+        // 4. Schedule spaced repetition for incorrect answers
+        if (typeof scheduleReviewDB === 'function') {
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
+                const userAnswer = answers[i];
+
+                let isCorrect = false;
+                if (question.type === 'multiple-choice') {
+                    isCorrect = userAnswer === question.correct;
+                } else {
+                    const correctAnswer = (question.answer || '').toLowerCase().trim();
+                    const userAnswerText = (userAnswer || '').toLowerCase().trim();
+                    isCorrect = userAnswerText === correctAnswer;
+                }
+
+                // Schedule review (performance: 1-5, where 5 is perfect)
+                const performance = isCorrect ? 5 : 1;
+                const questionId = `${topic}_${i}_${Date.now()}`;
+                await scheduleReviewDB(userEmail, questionId, question, performance);
+            }
+            console.log('🔄 Spaced repetition scheduled');
+        }
+
+        // 5. Update leaderboard
+        if (typeof updateLeaderboardDB === 'function') {
+            let points = 10; // Base points for completing quiz
+            if (score === total) {
+                points += 20; // Perfect score bonus
+
+                // Award perfect score achievement
+                if (typeof awardAchievementDB === 'function') {
+                    await awardAchievementDB(userEmail, 'score', 'Perfect Score', { topic, score, total });
+                }
+            }
+
+            await updateLeaderboardDB(userEmail, userName, points);
+            console.log(`🏆 Leaderboard updated: +${points} points`);
+        }
+
+        // 6. Check for mastery achievements
+        if (typeof getUserProgressDB === 'function' && typeof awardAchievementDB === 'function') {
+            const progress = await getUserProgressDB(userEmail);
+            const topicProgress = progress.find(p => p.topic === topic);
+
+            if (topicProgress) {
+                if (topicProgress.mastery_level >= 75) {
+                    await awardAchievementDB(userEmail, 'mastery', `${topic} Master`, {
+                        topic,
+                        mastery: topicProgress.mastery_level
+                    });
+                } else if (topicProgress.mastery_level >= 50) {
+                    await awardAchievementDB(userEmail, 'mastery', `${topic} Advanced`, {
+                        topic,
+                        mastery: topicProgress.mastery_level
+                    });
+                }
+            }
+        }
+
+        console.log('✅ All advanced features tracked successfully');
+    } catch (error) {
+        console.error('Error tracking advanced features:', error);
+        // Don't throw - we don't want to break the quiz flow
     }
 }
 

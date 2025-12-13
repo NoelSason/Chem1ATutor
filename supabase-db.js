@@ -467,4 +467,394 @@ async function getQuizAttemptsDB(userEmail) {
     }));
 }
 
+// ==========================================
+// USER PROGRESS & MASTERY LEVELS
+// ==========================================
+
+async function getUserProgressDB(userEmail) {
+    const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_email', userEmail);
+
+    if (error) throw new Error(error.message);
+    return data || [];
+}
+
+async function updateUserProgressDB(userEmail, topic, correct, total) {
+    // Get existing progress
+    const { data: existing } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_email', userEmail)
+        .eq('topic', topic)
+        .single();
+
+    const totalAttempts = (existing?.total_attempts || 0) + total;
+    const correctAnswers = (existing?.correct_answers || 0) + correct;
+    const accuracy = (correctAnswers / totalAttempts) * 100;
+
+    // Calculate mastery level (0-100)
+    const masteryLevel = Math.min(100, Math.round(accuracy));
+
+    const { data, error } = await supabase
+        .from('user_progress')
+        .upsert({
+            user_email: userEmail,
+            topic: topic,
+            mastery_level: masteryLevel,
+            total_attempts: totalAttempts,
+            correct_answers: correctAnswers,
+            last_practiced: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_email,topic' })
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+// ==========================================
+// SPACED REPETITION
+// ==========================================
+
+async function scheduleReviewDB(userEmail, questionId, questionData, performance) {
+    // SM-2 Algorithm
+    const { data: existing } = await supabase
+        .from('spaced_repetition')
+        .select('*')
+        .eq('user_email', userEmail)
+        .eq('question_id', questionId)
+        .single();
+
+    let interval = 1;
+    let easeFactor = 2.5;
+    let repetitions = 0;
+
+    if (existing) {
+        repetitions = existing.repetitions;
+        easeFactor = existing.ease_factor;
+
+        if (performance >= 3) { // Correct
+            if (repetitions === 0) {
+                interval = 1;
+            } else if (repetitions === 1) {
+                interval = 6;
+            } else {
+                interval = Math.round(existing.interval_days * easeFactor);
+            }
+            repetitions++;
+            easeFactor = easeFactor + (0.1 - (5 - performance) * (0.08 + (5 - performance) * 0.02));
+        } else { // Incorrect
+            repetitions = 0;
+            interval = 1;
+        }
+    }
+
+    easeFactor = Math.max(1.3, easeFactor);
+    const nextReviewDate = new Date();
+    nextReviewDate.setDate(nextReviewDate.getDate() + interval);
+
+    const { data, error } = await supabase
+        .from('spaced_repetition')
+        .upsert({
+            user_email: userEmail,
+            question_id: questionId,
+            question_data: questionData,
+            next_review_date: nextReviewDate.toISOString(),
+            interval_days: interval,
+            ease_factor: easeFactor,
+            repetitions: repetitions,
+            last_reviewed: new Date().toISOString()
+        }, { onConflict: 'user_email,question_id' })
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+async function getDueReviewsDB(userEmail) {
+    const { data, error } = await supabase
+        .from('spaced_repetition')
+        .select('*')
+        .eq('user_email', userEmail)
+        .lte('next_review_date', new Date().toISOString())
+        .order('next_review_date', { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return data || [];
+}
+
+// ==========================================
+// MISTAKE JOURNAL
+// ==========================================
+
+async function saveMistakeDB(userEmail, question, userAnswer, correctAnswer, topic) {
+    const { data, error } = await supabase
+        .from('mistake_journal')
+        .insert([{
+            user_email: userEmail,
+            question: question,
+            user_answer: userAnswer,
+            correct_answer: correctAnswer,
+            topic: topic
+        }])
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+async function getMistakesDB(userEmail, filters = {}) {
+    let query = supabase
+        .from('mistake_journal')
+        .select('*')
+        .eq('user_email', userEmail);
+
+    if (filters.topic) {
+        query = query.eq('topic', filters.topic);
+    }
+    if (filters.reviewed !== undefined) {
+        query = query.eq('reviewed', filters.reviewed);
+    }
+
+    query = query.order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return data || [];
+}
+
+async function updateMistakeNotesDB(mistakeId, notes) {
+    const { data, error } = await supabase
+        .from('mistake_journal')
+        .update({ notes: notes })
+        .eq('id', mistakeId)
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+async function markMistakeReviewedDB(mistakeId) {
+    const { data, error } = await supabase
+        .from('mistake_journal')
+        .update({ reviewed: true })
+        .eq('id', mistakeId)
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+// ==========================================
+// DAILY CHALLENGES
+// ==========================================
+
+async function getTodaysChallengeDB() {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+        .from('daily_challenges')
+        .select('*')
+        .eq('challenge_date', today)
+        .single();
+
+    if (error && error.code !== 'PGRST116') throw new Error(error.message);
+    return data;
+}
+
+async function completeChallengeDB(userEmail, challengeId, score, total, timeTaken, pointsEarned) {
+    const { data, error } = await supabase
+        .from('user_challenge_completions')
+        .insert([{
+            user_email: userEmail,
+            challenge_id: challengeId,
+            score: score,
+            total: total,
+            time_taken_seconds: timeTaken,
+            points_earned: pointsEarned
+        }])
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+async function getUserChallengeCompletionsDB(userEmail) {
+    const { data, error } = await supabase
+        .from('user_challenge_completions')
+        .select('*')
+        .eq('user_email', userEmail)
+        .order('completed_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return data || [];
+}
+
+// ==========================================
+// STREAKS
+// ==========================================
+
+async function getUserStreakDB(userEmail) {
+    const { data, error } = await supabase
+        .from('user_streaks')
+        .select('*')
+        .eq('user_email', userEmail)
+        .single();
+
+    if (error && error.code !== 'PGRST116') throw new Error(error.message);
+    return data;
+}
+
+async function updateStreakDB(userEmail) {
+    const today = new Date().toISOString().split('T')[0];
+    const streak = await getUserStreakDB(userEmail);
+
+    if (!streak) {
+        // Create new streak
+        const { data, error } = await supabase
+            .from('user_streaks')
+            .insert([{
+                user_email: userEmail,
+                current_streak: 1,
+                longest_streak: 1,
+                last_practice_date: today,
+                total_practice_days: 1
+            }])
+            .select();
+
+        if (error) throw new Error(error.message);
+        return data[0];
+    }
+
+    const lastDate = new Date(streak.last_practice_date);
+    const todayDate = new Date(today);
+    const daysDiff = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+
+    let newStreak = streak.current_streak;
+    if (daysDiff === 0) {
+        // Already practiced today
+        return streak;
+    } else if (daysDiff === 1) {
+        // Consecutive day
+        newStreak++;
+    } else {
+        // Streak broken
+        newStreak = 1;
+    }
+
+    const { data, error } = await supabase
+        .from('user_streaks')
+        .update({
+            current_streak: newStreak,
+            longest_streak: Math.max(newStreak, streak.longest_streak),
+            last_practice_date: today,
+            total_practice_days: streak.total_practice_days + 1,
+            updated_at: new Date().toISOString()
+        })
+        .eq('user_email', userEmail)
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+// ==========================================
+// ACHIEVEMENTS
+// ==========================================
+
+async function awardAchievementDB(userEmail, achievementType, achievementName, achievementData = {}) {
+    const { data, error } = await supabase
+        .from('user_achievements')
+        .insert([{
+            user_email: userEmail,
+            achievement_type: achievementType,
+            achievement_name: achievementName,
+            achievement_data: achievementData
+        }])
+        .select();
+
+    if (error && error.code !== '23505') throw new Error(error.message); // Ignore duplicate
+    return data ? data[0] : null;
+}
+
+async function getUserAchievementsDB(userEmail) {
+    const { data, error } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_email', userEmail)
+        .order('earned_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return data || [];
+}
+
+// ==========================================
+// LEADERBOARD
+// ==========================================
+
+async function updateLeaderboardDB(userEmail, userName, pointsToAdd, school = null) {
+    const { data: existing } = await supabase
+        .from('leaderboard_scores')
+        .select('*')
+        .eq('user_email', userEmail)
+        .single();
+
+    const { data, error } = await supabase
+        .from('leaderboard_scores')
+        .upsert({
+            user_email: userEmail,
+            user_name: userName,
+            school: school,
+            total_points: (existing?.total_points || 0) + pointsToAdd,
+            weekly_points: (existing?.weekly_points || 0) + pointsToAdd,
+            monthly_points: (existing?.monthly_points || 0) + pointsToAdd,
+            quiz_count: (existing?.quiz_count || 0) + 1,
+            last_updated: new Date().toISOString()
+        }, { onConflict: 'user_email' })
+        .select();
+
+    if (error) throw new Error(error.message);
+    return data[0];
+}
+
+async function getLeaderboardDB(type = 'total', limit = 100) {
+    let orderColumn = 'total_points';
+    if (type === 'weekly') orderColumn = 'weekly_points';
+    if (type === 'monthly') orderColumn = 'monthly_points';
+
+    const { data, error } = await supabase
+        .from('leaderboard_scores')
+        .select('*')
+        .order(orderColumn, { ascending: false })
+        .limit(limit);
+
+    if (error) throw new Error(error.message);
+    return data || [];
+}
+
+async function getUserRankDB(userEmail, type = 'total') {
+    let orderColumn = 'total_points';
+    if (type === 'weekly') orderColumn = 'weekly_points';
+    if (type === 'monthly') orderColumn = 'monthly_points';
+
+    const { data: user } = await supabase
+        .from('leaderboard_scores')
+        .select('*')
+        .eq('user_email', userEmail)
+        .single();
+
+    if (!user) return null;
+
+    const userPoints = user[orderColumn];
+
+    const { count, error } = await supabase
+        .from('leaderboard_scores')
+        .select('*', { count: 'exact', head: true })
+        .gt(orderColumn, userPoints);
+
+    if (error) throw new Error(error.message);
+    return (count || 0) + 1;
+}
+
 console.log('✅ Supabase database wrapper loaded');
